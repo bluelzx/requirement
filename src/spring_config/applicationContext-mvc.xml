@@ -1,0 +1,206 @@
+﻿﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+	<import resource="applicationContext.xml"/>
+	
+	<bean id="ApplicationContextUtil" class="com.lanzx.rmmsys.utils.ApplicationContextUtil" />
+	
+	<bean id="ApplicationInit" class="com.lanzx.rmmsys.utils.ApplicationInit"  init-method="init" />
+	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping" />
+
+	<bean class ="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" >  
+	    <property name="messageConverters">  
+		  	<list>  
+		   		<ref bean="mappingJacksonHttpMessageConverter" />  
+		  	</list>  
+	 	</property>  
+	</bean>   
+	   
+	<bean name="mappingJacksonHttpMessageConverter" 
+	      class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter" /> 
+    
+	<bean name="viewResolver" 
+	      class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass">
+			<value>org.springframework.web.servlet.view.JstlView</value>
+		</property>
+		<property name="prefix">
+			<value>/WEB-INF/jsp/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+	<bean id="multipartResolver"  class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="defaultEncoding" value="utf-8"/> 
+        <property name="maxUploadSize" value="25474565"/>
+    </bean>
+	
+	
+	
+	<bean name="SysUserController" class="com.lanzx.rmmsys.view.SysUserController" scope="prototype">
+		<property name="userService" ref="sysUserService"/>
+		<property name="menuService" ref="menuService"/>
+		<property name="paraService" ref="paraService"/>
+	</bean>
+	
+	<bean name="IndexController" class="com.lanzx.rmmsys.view.IndexController" scope="prototype">
+	<property name="taskService" ref="taskService"/>
+	<property name="requirementService" ref="requirementService"/>
+	<property name="workRecordService" ref="workRecordService"/>
+	</bean>
+		
+	<bean name="MenuController" class="com.lanzx.rmmsys.view.MenuController" scope="prototype">
+		<property name="menuService" ref="menuService"/>
+		<property name="paraService" ref="paraService"/>
+	</bean>
+	
+	<bean name="RequirementController" class="com.lanzx.rmmsys.view.RequirementController" scope="prototype">
+		<property name="requirementService" ref="requirementService"/>
+		<property name="paraService" ref="paraService"/>
+		<property name="fileService" ref="fileService"/>
+	</bean>
+	
+	<bean name="TaskController" class="com.lanzx.rmmsys.view.TaskController" scope="prototype">
+		<property name="taskService" ref="taskService"/>
+		<property name="userService" ref="sysUserService"/>
+		<property name="paraService" ref="paraService"/>
+		<property name="requirementService" ref="requirementService"/>
+		<property name="rtxServer" ref="RTXServer"/>
+	</bean>
+	
+	<bean name="FileController" class="com.lanzx.rmmsys.view.FileController" scope="prototype">
+		<property name="fileService" ref="fileService"/>
+		<property name="paraService" ref="paraService"/>
+	</bean>
+	
+	<bean name="LoginController" class="com.lanzx.rmmsys.view.LoginController" scope="prototype">
+		<property name="userService" ref="sysUserService"/>
+		<property name="paraService" ref="paraService"/>
+	</bean>
+	
+	<bean name="LogController" class="com.lanzx.rmmsys.view.LogController" scope="prototype">
+		<property name="logService" ref="logService"/>
+	</bean>
+	
+	<bean name="ParaController" class="com.lanzx.rmmsys.view.ParaController" scope="prototype">
+		<property name="paraService" ref="paraService"/>
+	</bean>
+	
+	<bean name="VacationController" class="com.lanzx.rmmsys.view.VacationController" scope="prototype">
+		<property name="vacationService" ref="vactionService"/>
+	</bean>
+	
+	<bean name="ProjectController" class="com.lanzx.rmmsys.view.ProjectController" scope="prototype">
+		<property name="projectService" ref="projectService"/>
+	</bean>
+	
+	<bean name="WorkRecordController" class="com.lanzx.rmmsys.view.WorkRecordController" scope="prototype">
+		<property name="workRecordService" ref="workRecordService"/>
+	</bean>
+	
+	<bean name="RequirementApplyController" class="com.lanzx.rmmsys.view.RequirementApplyController" scope="prototype">
+		<property name="applyService" ref="applyService"/>
+		<property name="userService" ref="sysUserService"/>
+		<property name="requirementService" ref="requirementService"/>
+	</bean>
+	
+	<bean name="NotifyUserCheckInJob" class="com.lanzx.rmmsys.task.NotifyUserCheckInJob" scope="prototype">
+		<property name="taskService" ref="taskService"/>
+		<property name="userService" ref="sysUserService"/>
+	</bean>
+	
+	<bean name="SystemBack" class="com.lanzx.rmmsys.task.SystemBack">
+		<property name="fileService" ref="fileService" />
+		<property name="ftpParameter" ref="ftpParameter" />
+		<property name="backDataTaskService" ref="backDataTaskService" />
+	</bean>
+	
+	<bean name="ManhaurListController" class="com.lanzx.rmmsys.view.ManhaurListController" scope="prototype">
+		<property name="manhaurListService" ref="manhaurListService"/>
+	</bean>
+	
+	<!-- Quartz本地Schduler -->
+	<bean id="localQuartzScheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<!-- Triggers集成 -->
+		<property name="triggers">
+			<list>
+				<!-- 
+				<ref bean="cronTrigger" />
+				 -->
+				<ref bean="BackTrigger" />
+				<!-- 
+				<ref bean="userDayCheckTrigger" />
+				-->
+			</list>
+		</property>
+		<!-- Quartz配置, 本地运行无需单独的quartz.properties文件，在此简单配置即可 -->
+		<property name="quartzProperties">
+			<props>
+				<prop key="org.quartz.threadPool.threadCount">1</prop>
+			</props>
+		</property>
+		<!-- 启动时延期2秒开始任务 -->
+		<property name="startupDelay" value="2" />
+	</bean>
+
+	<!-- Cron式Trigger定义 -->
+	<!-- 
+	<bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="cronJobDetail" />
+		<property name="cronExpression" value="0 20/3 17-18 ? * MON-FRI" />
+	</bean>
+	 -->
+
+	<!-- JobDetajil, 基于MethodInvokingJobDetailFactoryBean调用普通Spring Bean -->
+	<!-- 
+	<bean id="cronJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="NotifyUserCheckInJob" />
+		<property name="targetMethod" value="job" />
+		<property name="concurrent" value="false" />
+	</bean>
+	 -->
+	
+	<!-- 系统备份任务 -->
+	<bean id="BackTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="backDetail" />
+		<property name="cronExpression" value="* * 13,19 ? * MON-FRI" />
+	</bean>
+
+	<bean id="backDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="SystemBack" />
+		<property name="targetMethod" value="doSysBack" />
+		<property name="concurrent" value="false" />
+	</bean>
+	<!-- 
+	<bean name="NotifyUserDayCheckJob" class="com.lanzx.rmmsys.task.NotifyUserDayCheckJob" scope="prototype">
+		<property name="taskService" ref="taskService"/>
+		<property name="userService" ref="sysUserService"/>
+	</bean>
+	 -->
+	<!-- 前一工作日没有进行签到 -->
+	<!-- 
+	<bean id="userDayCheckTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="userDayCheckDetail" />
+		<property name="cronExpression" value="* 20/30 8 * * ?" />
+	</bean>
+	 -->
+	<!-- 
+	<bean id="userDayCheckDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="NotifyUserDayCheckJob" />
+		<property name="targetMethod" value="job" />
+		<property name="concurrent" value="false" />
+	</bean>
+	 -->
+	<!-- 
+	<task:scheduled-tasks >
+		<task:scheduled ref="NotifyUserCheckInJob" method="job"  fixed-delay="60000" cron="* 20/3 17 * * ?"  />
+	</task:scheduled-tasks>
+	-->
+</beans>

@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd"
+	default-autowire="byType">
+	<import resource="applicationContext-bean.xml"/>
+	 
+	<bean id="ftpParameter" class="com.lanzx.rmmsys.utils.FtpParameter" >
+		<property name="server"><value>192.168.220.64</value></property>
+		<property name="user"><value>report</value></property>
+		<property name="password"><value>report</value></property>
+		<property name="port"><value>21</value></property>
+		<property name="basePath"><value>/app/report/rmm/upload/</value></property>
+	</bean> 
+	
+	<!-- RTX 服务器 -->
+	<bean id="RTXServer" class="rtx.RTXUtils" scope="singleton">
+		<property name="serverUrl"><value>192.168.220.159</value></property>
+		<property name="port"><value>8012</value></property>
+	</bean>
+	
+	<!-- for local -->
+	  
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName"><value>oracle.jdbc.driver.OracleDriver</value></property>
+		<property name="url"><value>jdbc:oracle:thin:@192.168.220.66:1523:srcbfin</value></property>
+		<property name="username"><value>srcc_rmm</value></property>
+		<property name="password"><value>srcc_rmmsrcc_rmm</value></property>
+	</bean> 
+	 
+	 <!-- for tomcat -->
+	  <!--
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName"><value>oracle.jdbc.driver.OracleDriver</value></property>
+		<property name="url"><value>jdbc:oracle:thin:@192.168.240.206:1521:hzrm</value></property>
+		<property name="username"><value>hzrm</value></property>
+		<property name="password"><value>hzrm</value></property>
+	</bean> 
+	  -->
+	<!-- for weblogic -->
+	 <!--
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName">
+			<value>jndi/srcc_rmm</value>
+		</property>
+	</bean> 
+	-->
+	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:mybatis_config/Configuration.xml"></property>
+	</bean>
+	
+	<bean class="org.mybatis.spring.annotation.MapperScannerPostProcessor">
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+		<property name="basePackage" value="com.lanzx.rmmsys.dao" />
+	</bean>
+	
+   	<bean name="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">   
+    	<property name="dataSource" ref="dataSource"></property>
+ 	</bean>   
+	
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="delete*" propagation="REQUIRED" read-only="false" 
+			           rollback-for="java.lang.Exception" no-rollback-for="java.lang.RuntimeException"/>
+			<tx:method name="insert*" propagation="REQUIRED" read-only="false" 
+			           rollback-for="java.lang.RuntimeException" />
+			<tx:method name="update*" propagation="REQUIRED" read-only="false" 
+			           rollback-for="java.lang.Exception" />
+			
+			<tx:method name="find*" propagation="SUPPORTS"/>
+			<tx:method name="get*" propagation="SUPPORTS"/>
+			<tx:method name="select*" propagation="SUPPORTS"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<aop:config>
+		<aop:pointcut id="pc" expression="execution(* *.*.*(..))" />
+		<aop:advisor pointcut-ref="pc" advice-ref="txAdvice" />
+	</aop:config>
+	
+</beans>

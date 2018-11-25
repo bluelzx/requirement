@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="requirementTestApply">
+	
+	<resultMap type="requirementTestApply" id="requirementTestApply">
+		<result property="applyCode" column="applyCode" javaType="string" />
+		<result property="applyVersion" column="applyVersion" javaType="string" />
+		<result property="requirementId" column="requirementId" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="requirementName" column="requirementName" javaType="string" />
+		<result property="applyName" column="applyName" javaType="string" />
+		<result property="devPrincipal" column="devPrincipal" javaType="string" />
+		<result property="reportSelf" column="reportSelf" javaType="string" />
+		<result property="applyTime" column="applyTime" javaType="string" />
+		<result property="applyDept" column="applyDept" javaType="string" />
+		<result property="applyFinishTime" column="applyFinishTime" javaType="string" />
+		<result property="howToTest" column="howToTest" javaType="string" />
+		<result property="info" column="info" javaType="string" />
+		<result property="conner" column="conner" javaType="string" />
+		<result property="createTime" column="createTime" javaType="string" />
+		<result property="onLineDate" column="onLineDate" javaType="string" />
+		<result property="creator" column="creator" javaType="string" />
+		<result property="status" column="status" javaType="int" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<sql id="myWhere" >
+	<if test="requirementCode!=null"> and t.requirementCode like '%${requirementCode}%'  </if>
+	<if test="requirementName!=null"> and t.requirementName like '%${requirementName}%'  </if>
+	<if test="applyDept!=null"> and d.applyDept like '%${applyDept}%'  </if>
+	<if test="conner!=null"> and d.conner like '%${conner}%'  </if>
+	<if test="status!=null"> and d.status = ${status}  </if>
+	</sql>
+	
+	<select id="getApplyByCode" resultMap="requirementTestApply" parameterType="string">
+	      select * from rmm_requirement_apply d where d.applyCode = '${applyCode}'
+	</select>
+	
+	<select id="getAllRequirementApply" resultMap="requirementTestApply" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select d.*,t.requirementCode,t.requirementName   
+				from rmm_requirement t,rmm_requirement_apply d 
+				WHERE t.requirementId = d.requirementId 
+				<include refid="myWhere"/>
+				order by d.createTime desc 
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalRequirementApply" resultType="Integer" parameterType="map">
+	select count(d.applyCode) 
+	from rmm_requirement t,rmm_requirement_apply d 
+	WHERE t.requirementId = d.requirementId 
+	<include refid="myWhere"/>
+	</select>
+	
+	<select id="getNextApplyCode" resultType="String" parameterType="string" >
+		SELECT nvl(to_char(max(to_number(substr(t.applyCode,length(t.applyCode)-1,2)))+1,'FM00'),'01') applyCode FROM rmm_requirement_apply t 
+		where t.applyCode like '${applyCode}%'
+	</select>
+	
+	<insert id="insertRequirementApply" parameterType="requirementTestApply">
+		insert into rmm_requirement_apply
+  (applycode, applyversion, requirementid, applyname, devprincipal, reportself, applytime, applydept, applyfinishtime, howtotest, info, conner, createtime, creator,status)
+	values
+  (#{applyCode,jdbcType=VARCHAR}, #{applyVersion,jdbcType=VARCHAR}, #{requirementId,jdbcType=VARCHAR}, #{applyName,jdbcType=VARCHAR}, #{devPrincipal,jdbcType=VARCHAR}, #{reportSelf,jdbcType=VARCHAR}, #{applyTime,jdbcType=VARCHAR}, #{applyDept,jdbcType=VARCHAR},  #{applyFinishTime,jdbcType=VARCHAR}, #{howToTest,jdbcType=VARCHAR},  #{info,jdbcType=VARCHAR},  #{conner,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR}, #{creator,jdbcType=VARCHAR},#{status})
+	</insert>
+	
+	<update id="updateApplyStatus" parameterType="requirementTestApply">
+		 update rmm_requirement_apply t1 set t1.status=#{status} <if test="applyTime!=null"> , t1.applyTime = '${applyTime}'  </if>
+			where t1.applyCode='${applyCode}'
+	</update>
+	
+	<update id="updateApplyOnLineDate" parameterType="requirementTestApply">
+		 update rmm_requirement_apply t1 set t1.ONLINEDATE='${onLineDate}',t1.status=#{status}  
+			where t1.applyCode='${applyCode}'
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

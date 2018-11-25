@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="requirement">
+	
+	<resultMap type="requirement" id="requirement">
+		<result property="requirementId" column="requirementId" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="requirementName" column="requirementName" javaType="string" />
+		<result property="remark" column="remark" javaType="string" />
+		<result property="createTime" column="createTime" javaType="string" />
+		<result property="creator" column="creator" javaType="string" />
+		<result property="startDate" column="startDate" javaType="string" />
+		<result property="endDate" column="endDate" javaType="string" />
+		<result property="closeTime" column="closeTime" javaType="string" />
+		<result property="confirmCloseTime" column="confirmCloseTime" javaType="string" />
+		<result property="confirmCloser" column="confirmCloser" javaType="string" />
+		<result property="dept" column="dept" javaType="string" />
+		<result property="presenter" column="presenter" javaType="string" />
+		<result property="parentCode" column="parentCode" javaType="string" />
+		<result property="status" column="status" javaType="int" jdbcType="INTEGER"/>
+		<result property="requirementType" column="requirementType" javaType="int" jdbcType="INTEGER"/>
+		<result property="owner" column="owner" javaType="string"/>
+		<result property="watcher" column="watcher" javaType="string"/>
+		<result property="launchDate" column="launchDate" javaType="string"/>
+		<result property="important" column="important" javaType="int" jdbcType="INTEGER"/>
+		<result property="urgent" column="urgent" javaType="int" jdbcType="INTEGER"/>
+		<result property="businessType" column="businessType" javaType="int" jdbcType="INTEGER"/>
+		<result property="planManHaur" column="planManHaur" javaType="double" jdbcType="NUMERIC"/>
+		<result property="projectCode" column="projectCode" javaType="string"/>
+	</resultMap>
+	
+	<resultMap type="RequirementCount" id="RequirementCount">
+		<result property="requirementType" column="requirementType" javaType="string" />
+		<result property="rBeginCounts" column="rBeginCounts" javaType="string" />
+		<result property="rRuningCounts" column="rRuningCounts" javaType="string" />
+		<result property="rFinishCounts" column="rFinishCounts" javaType="string" />
+		<result property="rCloseCounts" column="rCloseCounts" javaType="string" />
+	</resultMap>
+	
+	<sql id="requirementColumn" >requirementId,requirementCode, requirementName, remark, createTime, creator, startDate, endDate, status, dept, presenter,parentCode,requirementType,substr(closeTime,1,8) closeTime,owner,important,urgent,substr(confirmclosetime,1,8) confirmCloseTime,confirmCloser,planManHaur,PROJECT_CODE projectCode,businessType,watcher</sql>
+	<sql id="launchColumn" >t1.requirementId,t1.requirementCode, t1.requirementName, t1.remark, t1.createTime, t1.creator, t1.startDate, t1.endDate, t1.status, t1.dept, t1.presenter,t1.parentCode,t1.requirementType,substr(t1.closeTime,1,8) closeTime,t1.owner,t1.important,t1.urgent,substr(t1.confirmclosetime,1,8) confirmCloseTime,t1.confirmCloser,t2.launchdate,t1.planManHaur,t1.PROJECT_CODE projectCode,t1.businessType,t1.watcher</sql>
+	<sql id="myWhere" >
+	<if test="requirementId!=null"> and requirementId = '${requirementId}'  </if>
+	<if test="requirementCode!=null"> and requirementCode like '%${requirementCode}%'  </if>
+	<if test="requirementName!=null"> and requirementName like '%${requirementName}%'  </if>
+	<if test="dept!=null"> and dept like '%${dept}%'  </if>
+	<if test="presenter!=null"> and presenter like '%${presenter}%'  </if>
+	<if test="status!=null"> and status = ${status}  </if>
+	<if test="requirementType!=null"> and requirementType = ${requirementType}  </if>
+	<if test="important!=null"> and important = ${important}  </if>
+	<if test="urgent!=null"> and urgent = ${urgent}  </if>
+	<if test="businessType!=null"> and businessType = ${businessType}  </if>
+	<if test="confirmCloser!=null"> and confirmCloser = '${confirmCloser}'  </if>
+	<if test="owner!=null"> and owner = '${owner}'  </if>
+	<if test="watcher!=null"> and watcher = '${watcher}'  </if>
+	<if test="projectCode!=null"> and PROJECT_CODE = '${projectCode}'  </if>
+	</sql>
+	<sql id="launWhere" >
+	<if test="requirementId!=null"> and t1.requirementId = '${requirementId}'  </if>
+	<if test="requirementCode!=null"> and t1.requirementCode like '%${requirementCode}%'  </if>
+	<if test="requirementName!=null"> and t1.requirementName like '%${requirementName}%'  </if>
+	<if test="dept!=null"> and t1.dept like '%${dept}%'  </if>
+	<if test="presenter!=null"> and t1.presenter like '%${presenter}%'  </if>
+	<if test="status!=null"> and t1.status = ${status}  </if>
+	<if test="requirementType!=null"> and t1.requirementType = ${requirementType}  </if>
+	<if test="important!=null"> and t1.important = ${important}  </if>
+	<if test="urgent!=null"> and t1.urgent = ${urgent}  </if>
+	<if test="businessType!=null"> and businessType = ${businessType}  </if>
+	<if test="confirmCloser!=null"> and t1.confirmCloser = '${confirmCloser}'  </if>
+	<if test="owner!=null"> and t1.owner = '${owner}'  </if>
+	<if test="watcher!=null"> and t1.watcher = '${watcher}'  </if>
+	<if test="projectCode!=null"> and PROJECT_CODE = '${projectCode}'  </if>
+	</sql>
+	<select id="getAllRequirement" resultMap="requirement" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="requirementColumn"/>  
+				from rmm_requirement 
+				WHERE status!=0 
+				<include refid="myWhere"/>
+				order by requirementId desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalRequirement" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_requirement 
+	WHERE status!=0
+	<include refid="myWhere"/>
+	</select>
+	
+	<select id="getAllLaunchRequirement" resultMap="requirement" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="launchColumn"/>  
+				from rmm_requirement t1,( select requirementid,max(launchdate) launchDate 
+ from rmm_task  
+ where launchdate is not null and launchdate>=to_char(sysdate,'YYYYMMDD')
+ group by requirementid ) t2 
+				WHERE t1.requirementid = t2.requirementid 
+				and t1.status!=0 
+				<include refid="launWhere"/>
+				order by requirementId desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalLaunchRequirement" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_requirement t1,( select requirementid,max(launchdate) launchDate 
+ from rmm_task  
+ where launchdate is not null and launchdate>=to_char(sysdate,'YYYYMMDD')
+ group by requirementid ) t2 
+				WHERE t1.requirementid = t2.requirementid 
+				and t1.status!=0 
+	<include refid="launWhere"/>
+	</select>
+	
+	<select id="getToAssignRequirement" resultMap="requirement" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="requirementColumn"/>  
+				from rmm_requirement t 
+				WHERE t.status!=0 
+				<include refid="myWhere"/>
+				and not exists ( select 'a' FROM rmm_task k where t.requirementid = k.requirementid)
+				order by t.requirementId desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalToAssignRequirement" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_requirement t
+	WHERE t.status!=0
+	<include refid="myWhere"/>
+	and not exists ( select 'a' FROM rmm_task k where t.requirementid = k.requirementid)
+	</select>
+	
+	<select id="getSelectRequirements" resultMap="requirement" parameterType="string">
+		SELECT requirementId, requirementCode FROM rmm_requirement 
+		where 1=1
+		<if test="requirementCode!=null"> and requirementCode like '%${requirementCode}%'  </if>
+		 order by requirementId desc
+	</select>
+	
+	<select id="getUnCloseSelectRequirements" resultMap="requirement" parameterType="string">
+		SELECT requirementId, requirementCode FROM rmm_requirement 
+		where status!='4'
+		<if test="requirementCode!=null"> and requirementCode like '%${requirementCode}%'  </if>
+		 order by requirementId desc
+	</select>
+	
+	<insert id="insertRequirement" parameterType="requirement">
+		insert into rmm_requirement(requirementId,requirementcode, requirementname, remark, createtime, creator, startdate, enddate, status, dept, presenter, parentcode,requirementType,owner,important,urgent,planManHaur,PROJECT_CODE,businessType,watcher)
+		 values(#{requirementId},#{requirementCode},#{requirementName},#{remark,jdbcType=VARCHAR},to_char(sysdate,'YYYYMMDD'),#{creator,jdbcType=VARCHAR},#{startDate,jdbcType=VARCHAR},#{endDate,jdbcType=VARCHAR},#{status},#{dept,jdbcType=VARCHAR},#{presenter,jdbcType=VARCHAR},#{parentCode,jdbcType=VARCHAR},#{requirementType},#{owner,jdbcType=VARCHAR},#{important,jdbcType=INTEGER},#{urgent,jdbcType=INTEGER},#{planManHaur,jdbcType=NUMERIC},#{projectCode,jdbcType=VARCHAR},#{businessType,jdbcType=INTEGER},#{watcher,jdbcType=VARCHAR})
+	</insert>
+	
+	<update id="disableByCode" parameterType="string">
+		update  rmm_requirement set status=0
+		where requirementid=#{requirementId}
+	</update>
+	
+	<update id="updateRequirementStatus" parameterType="requirement">
+		update  rmm_requirement set status=#{status} 
+		where requirementid=#{requirementId} 
+	</update>
+	
+	<update id="updateFirstColse" parameterType="map">
+		update  rmm_requirement set closeTime=#{confirmCloseTime}
+		where requirementid=#{requirementId}
+	</update>
+	
+	<update id="disableTaskByCode" parameterType="string">
+		update rmm_task t set t.status=0 where exists ( select 'x' from rmm_requirement h where h.requirementid=t.requirementid and h.requirementid=#{requirementId} )
+	</update>
+	
+	<update id="closeByRequirementId" parameterType="map">
+		update  rmm_requirement set status=4,confirmCloseTime=#{confirmCloseTime},confirmcloser=#{confirmCloser} 
+		where requirementid=#{requirementId}
+	</update>
+	
+	<update id="updateRequirement" parameterType="requirement">
+		update  rmm_requirement set requirementname=#{requirementName,jdbcType=VARCHAR},requirementCode=#{requirementCode,jdbcType=VARCHAR},remark=#{remark,jdbcType=VARCHAR},createtime=to_char(sysdate,'YYYYMMDD'),
+		startdate=#{startDate,jdbcType=VARCHAR},enddate=#{endDate,jdbcType=VARCHAR},dept=#{dept,jdbcType=VARCHAR},presenter=#{presenter,jdbcType=VARCHAR},parentcode=#{parentCode,jdbcType=VARCHAR},
+		requirementType=#{requirementType},owner=#{owner,jdbcType=VARCHAR},businessType=#{businessType,jdbcType=INTEGER},watcher=#{watcher,jdbcType=VARCHAR},
+		important=#{important,jdbcType=INTEGER},urgent=#{urgent,jdbcType=INTEGER},planManHaur=#{planManHaur,jdbcType=NUMERIC},
+		confirmCloseTime=#{confirmCloseTime,jdbcType=VARCHAR},confirmcloser=#{confirmCloser,jdbcType=VARCHAR},PROJECT_CODE=#{projectCode,jdbcType=VARCHAR}
+		where requirementId=#{requirementId}
+	</update>
+	
+	<select id="getRequirementByCode" resultType="requirement" parameterType="string">
+		select <include refid="requirementColumn"/>
+		from rmm_requirement
+		where  requirementId=#{requirementId}
+	</select>
+	
+	<select id="getRequirementByRequirementCode" resultType="requirement" parameterType="string">
+		select <include refid="requirementColumn"/>
+		from rmm_requirement
+		where  requirementCode=#{requirementCode}
+	</select>
+	
+	<select id="getRequirementById" resultType="requirement" parameterType="string">
+		select <include refid="requirementColumn"/>
+		from rmm_requirement
+		where  requirementId=#{requirementId}
+	</select>
+	
+	<select id="getNextTempRequirementCode" resultType="String" parameterType="string" >
+		SELECT nvl(to_char(to_number(substr(MAX(t.requirementcode),12,3))+1,'FM000'),'001') requirementcode FROM rmm_requirement t 
+		where t.requirementcode LIKE '${requirementCode}%'
+	</select>
+	
+	<select id="getRequirementCount" resultType="RequirementCount" parameterType="map" >
+		select requirementType,
+sum(rBeginCounts) rBeginCounts,
+sum(rRuningCounts) rRuningCounts,
+sum(rFinishCounts) rFinishCounts,
+sum(rCloseCounts) rCloseCounts
+from (
+select d.para_value requirementType, 
+  case when t.status=1 then count(1) else 0 end rBeginCounts,
+   case when t.status=2 then count(1) else 0 end rRuningCounts,
+    case when t.status=3 then count(1) else 0 end rFinishCounts,
+   case when t.status=4 then count(1) else 0 end rCloseCounts
+  from rmm_requirement t,
+       (select * from rmm_para d where d.para_type = '2') d 
+ where t.requirementtype = d.para_code 
+<if test="important!=null"> and t.important = ${important}  </if>
+<if test="urgent!=null"> and t.urgent = ${urgent}  </if>
+ group by d.para_value,t.status
+ )
+ group by requirementType
+	</select>
+	
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

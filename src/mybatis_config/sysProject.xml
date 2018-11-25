@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="projectitem">
+	
+	<resultMap type="project" id="project">
+		<result property="projectCode" column="projectCode" javaType="string" />
+		<result property="projectName" column="projectName" javaType="string" />
+	</resultMap>
+	
+	<sql id="projectColumn" > PROJECT_CODE projectCode, PROJECT_NAME projectName</sql>
+	<sql id="myWhere" >
+	<if test="projectCode!=null"> and PROJECT_CODE like '%${projectCode}%'  </if>
+	<if test="projectName!=null"> and PROJECT_NAME like '%${projectName}%'  </if>
+	</sql>
+	<select id="getProjectList" resultMap="project" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="projectColumn"/>  
+				from RMM_PROJECT 
+				WHERE 1=1 
+				<include refid="myWhere"/>
+				order by projectCode desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalProject" resultType="Integer" parameterType="map">
+	select count(*) 
+	from RMM_PROJECT 
+	WHERE 1=1 
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertProject" parameterType="project">
+		insert into RMM_PROJECT(PROJECT_CODE,PROJECT_NAME) 
+		values(#{projectCode,jdbcType=VARCHAR},#{projectName,jdbcType=VARCHAR})
+	</insert>
+	
+	<delete id="deleteProject" parameterType="string" >
+		delete from RMM_PROJECT
+		where PROJECT_CODE = #{projectCode}
+	</delete>
+	
+	<select id="getProjectByCode" resultType="project" parameterType="string">
+	select <include refid="projectColumn"/>  
+	from RMM_PROJECT 
+	WHERE PROJECT_CODE = #{projectCode}
+	</select>
+	
+	<update id="updateProject" parameterType="project">
+		update  rmm_project set PROJECT_NAME=#{projectName,jdbcType=VARCHAR}
+		where PROJECT_CODE = #{projectCode}  
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

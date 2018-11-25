@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProjectTrack">
+	
+	<resultMap type="projectTrack" id="projectTrack">
+		<result property="projectName" column="projectName" javaType="string" />
+		<result property="urgent" column="urgent" javaType="string" />
+		<result property="owner" column="owner" javaType="string" />
+		<result property="rtype" column="rtype" javaType="string" />
+		<result property="planmanhaur" column="planmanhaur" javaType="double" jdbcType="NUMERIC"  />
+		<result property="createDate" column="createDate" javaType="string"/>
+		<result property="planfinishDate" column="planfinishDate" javaType="string"/>
+		<result property="rDept" column="rDept" javaType="string"/>
+		<result property="projectStatus" column="projectStatus" javaType="string"/>
+		<result property="isClosed" column="isClosed" javaType="string"/>
+		<result property="isOverDate" column="isOverDate" javaType="string"/>
+		<result property="isAdded" column="isAdded" javaType="string"/>
+		<result property="pig" column="pig" javaType="string"/>
+		<result property="pts" column="pts" javaType="string"/>
+		<result property="pcf" column="pcf" javaType="string"/>
+		<result property="cntall" column="cntall" javaType="string"/>
+		<result property="presenter" column="presenter" javaType="string"/>
+	</resultMap>
+	
+	<select id="getProjectTrackList" resultMap="projectTrack" parameterType="map">
+	<![CDATA[
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		
+select t1.requirementcode || '-' || t1.requirementname as projectName,
+       to_char(t1.urgent) urgent,
+       t1.presenter presenter,
+       (select r1.username
+          from rmm_user r1
+         where r1.usercode = t1.owner) as owner,
+       (select r2.para_value
+          from rmm_para r2
+         where r2.para_type = '2'
+           and r2.para_code = t1.requirementtype) as rtype,
+       t1.planmanhaur as planmanhaur,
+       t1.createtime as createDate,
+       t1.enddate as planfinishDate,
+       t1.dept as rDept,
+       to_char(nvl(p_ig, '0(+0)')) pig,
+       to_char(nvl(p_ts, '0(+0)')) pts,
+       to_char(nvl(p_cf, '0')) pcf,
+	   to_char(nvl(p_cp, '0(+0)/' || nvl(cnt_all, 0))) as cntall,
+       case when t1.status=4 then 'Y' else 'N' end as isClosed,
+       case when t1.status!=0 and t1.createtime between #{startDate} and #{endDate}  then 'Y' else 'N' end as isAdded,  
+       
+       case
+         when t2.cnt_ig <> 0 and
+              t1.enddate < #{endDate} and
+              t1.status <> '4' then
+          'Y'
+         else
+          'N'
+       end as isOverDate --逾期标识(任务数(进行中)<>0 AND 计划完成日期<当前日期 AND 状态<>4-关闭)
+  from rmm_requirement t1
+  left join (select xx.requirementid,
+                    nvl(xx.cnt_all, 0) as cnt_all, --任务数(全部)
+                    nvl(xx.cnt_cp, 0) as cnt_cp, --任务数(已完成)
+                    nvl(xx.cnt_ts, 0) as cnt_ts, --任务数(测试)
+                    nvl(xx.cnt_cf, 0) as cnt_cf, --任务数(验收)
+                    nvl(xx.cnt_all, 0) - nvl(xx.cnt_cp, 0) -
+                    nvl(xx.cnt_ts, 0) - nvl(xx.cnt_cf, 0) as cnt_ig, --任务数(进行中)
+                    nvl(xx.cnt_new, 0) as cnt_new, --新增数(全部)
+                    nvl(xx.new_cp, 0) as new_cp, --新增数(已完成)
+                    nvl(xx.new_ts, 0) as new_ts, --新增数(测试)
+                    xx.cnt_cp || '(+' || xx.new_cp || ')/' || xx.cnt_all as p_cp, --新增占比(已完成)
+                    xx.cnt_ts || '(+' || xx.new_ts || ')' /*||xx.cnt_all*/ as p_ts, --新增占比(测试)
+                    xx.cnt_cf || '' /*||'/'||xx.cnt_all*/ as p_cf, --新增占比(验收)
+                    (xx.cnt_all - xx.cnt_cp - xx.cnt_ts - xx.cnt_cf) || '(+' ||
+                    xx.cnt_new || ')' /*||xx.cnt_all*/ as p_ig --新增占比(进行中)
+               from (select x.requirementid,
+                            count(*) as cnt_all, --任务数(全部)
+                            sum(case
+                                  when x.cd3 between #{startDate} and #{endDate} and case when
+                                   x.s3 <> '4' and
+                                       x.tasktype not in (2, 11, 12, 13, 14) and
+                                       x.s1 in (3, 6) and
+                                       x.cd1 between #{startDate} and #{endDate} then
+                                   '1'
+                                  else
+                                   '0'
+                                end = '0' and case
+                                  when x.s3 <> '4' and
+                                       x.tasktype in (2, 11, 12, 13, 14) and
+                                       (x.s2 in (1, 2) or
+                                       x.s1 in (3, 6) and x.s2 is null) and
+                                       x.cd1 between #{startDate} and #{endDate} then
+                                   '1'
+                                  else
+                                   '0'
+                                end = '0' then 1 else 0 end) as cnt_new, --新增数(全部)：
+                            sum(case
+                                  when x.s3 = '4' then
+                                   1
+                                  when x.s3 <> '4' and
+                                       x.tasktype not in (2, 11, 12, 13, 14) and
+                                       x.s1 in (3, 6) then
+                                   1
+                                  else
+                                   0
+                                end) as cnt_cp, --任务数(已完成)
+                            sum(case
+                                  when x.s3 = '4' and
+                                       x.cd2 between #{startDate} and #{endDate} then
+                                   1
+                                  when x.s3 <> '4' and
+                                       x.tasktype not in (2, 11, 12, 13, 14) and
+                                       x.s1 in (3, 6) and
+                                       x.cd1 between #{startDate} and #{endDate} then
+                                   1
+                                  else
+                                   0
+                                end) as new_cp, --新增数(已完成)
+                            sum(case
+                                  when x.s3 <> '4' and
+                                       x.tasktype in (2, 11, 12, 13, 14) and
+                                       (x.s2 in (1, 2) or
+                                       x.s1 in (3, 6) and x.s2 is null) then
+                                   1
+                                  else
+                                   0
+                                end) as cnt_ts, --任务数(测试)
+                            sum(case
+                                  when x.s3 <> '4' and
+                                       x.tasktype in (2, 11, 12, 13, 14) and 
+                                       (x.s2 in (1, 2) or 
+                                       x.s1 in (3, 6) and x.s2 is null) and 
+                                       x.cd1 between #{startDate} and #{endDate} then 
+                                   1
+                                  else
+                                   0
+                                end) as new_ts, --新增数(测试)
+                            sum(case
+                                  when x.s3 <> '4' and
+                                       x.tasktype in (2, 11, 12, 13, 14) and
+                                       x.s2 in (3, 4) then
+                                   1
+                                  else
+                                   0
+                                end) as cnt_cf --任务数(验收)
+                       from (select t1.requirementid,
+                                    t1.taskcode,
+                                    t1.tasktype,
+                                    t1.status as s1 /*任务*/,
+                                    t3.status as s2 /*送测*/,
+                                    t4.status as s3 /*需求*/,
+                                    t5.cd1, --任务完成日期
+                                    substr(t4.closetime, 1, 8) as cd2, --需求关闭日期
+                                    t1.starttime as cd3 --任务开始日期
+                               from rmm_task t1
+                               left join (select r.taskcode,
+                                                max(r.applycode) as applycode
+                                           from rmm_apply_task r
+                                          group by r.taskcode) t2 on t1.taskcode =
+                                                                     t2.taskcode
+                               left join rmm_requirement_apply t3 on t2.applycode =
+                                                                          t3.applycode
+                               left join rmm_requirement t4 on t4.requirementid =
+                                                                    t1.requirementid
+                               left join (select taskcode,
+                                                substr(max(logtime), 1, 8) as cd1
+                                           from rmm_log
+                                          where logtext = '完成任务'
+                                          group by taskcode) t5 on t1.taskcode =
+                                                                   t5.taskcode
+                              where t1.tasktype <> '99' --不统计确认任务
+                                and t1.status <> '0' --过滤0无效任务 
+                             ) x
+                      group by x.requirementid) xx) t2 on t1.requirementid =
+                                                          t2.requirementid
+ where t1.status not in ('0', '4') --截止期末需求未关闭
+    or t1.status = '4'
+   and substr(t1.closetime,1,8) between #{startDate} and #{endDate} --期间需求关闭
+ order by t1.urgent desc, t1.createtime desc
+
+	       ) AA 
+	       ]]>
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalProjectTrack" resultType="Integer" parameterType="map">
+	<![CDATA[
+	select count(*) 
+	from rmm_requirement t1 
+	where t1.status not in ('0', '4') --截止期末需求未关闭
+    or ( t1.status = '4'
+   and  substr(t1.closetime,1,8) between #{startDate} and #{endDate} ) --期间需求关闭
+	]]>
+	</select>
+	
+	
+	
+</mapper>

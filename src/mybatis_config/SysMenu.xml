@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sysmenu">
+	
+	<resultMap type="sysmenu" id="sysmenu">
+		<result property="menuCode" column="MENUCODE" javaType="string" />
+		<result property="text" column="MENUNAME" javaType="string" />
+		<result property="url" column="MENUURL" javaType="string" />
+		<result property="parentMenu" column="PARENTMENU" javaType="string"/>
+		<result property="menuOrder" column="MENUORDER" javaType="int" jdbcType="INTEGER"/>
+		<result property="creater" column="MENUCREATER" javaType="string"/>
+	</resultMap>
+	
+	<resultMap type="userMenu" id="userMenu">
+		<result property="userCode" column="USERCODE" javaType="string" />
+		<result property="menuCode" column="MENUCODE" javaType="string" />
+		<result property="parentMenu" column="PARENTMENU" javaType="string" />
+		<result property="menuOrder" column="MENUORDER" javaType="int" jdbcType="INTEGER" />
+	</resultMap>
+	
+	<sql id="menuColumn" >MENUCODE, MENUNAME, nvl(MENUURL,'@') MENUURL, nvl(PARENTMENU,'0') PARENTMENU,MENUORDER,MENUCREATER</sql>
+	<sql id="myWhere" >
+	<if test="text!=null"> and MENUNAME like '%${text}%'  </if>
+	</sql>
+	<select id="getSysMenu" resultMap="sysmenu" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="menuColumn"/>  
+				from rmm_menu 
+				WHERE MENUSTATUS=1 
+				<include refid="myWhere"/>
+				order by nvl(PARENTMENU,'0') asc,MENUORDER asc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getIndexSysMenu" resultMap="sysmenu" parameterType="string">
+		select distinct t1.* from rmm_menu t1,rmm_user_menu t2
+		where t1.menucode= t2.menucode
+		and t1.MENUSTATUS=1 
+		<if test="userCode!=null"> and t2.usercode= #{userCode}  </if>
+				order by nvl(t1.PARENTMENU,'0') asc,t1.MENUORDER asc
+	</select>
+	
+	<select id="getTotalSysMenu" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_menu 
+	WHERE MENUSTATUS=1 
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertSysMenu" parameterType="sysmenu">
+		insert into rmm_menu(MENUCODE,MENUNAME,MENUURL,PARENTMENU,MENUORDER,MENUCREATETIME,MENUCREATER,MENUSTATUS) values(#{menuCode},#{text},#{url},#{parentMenu},#{menuOrder},sysdate,#{creater},1)
+	</insert>
+	
+	<insert id="insertSysUserMenu" parameterType="userMenu">
+		insert into RMM_USER_MENU(USERCODE,MENUCODE,PARENTMENU,MENUORDER) 
+		values (#{userCode},#{menuCode},#{parentMenu},#{menuOrder})
+	</insert>
+	
+	<delete id="deleteSysUserMenu" parameterType="userMenu">
+		delete from RMM_USER_MENU
+		where  1=1
+		<if test="userCode!=null"> and userCode = #{userCode}  </if>
+		<if test="menuCode!=null"> and menuCode = #{menuCode}  </if>
+		
+	</delete>
+	
+	<update id="disableByMenuCode" parameterType="string">
+		update  rmm_menu set MENUSTATUS=0
+		where menuCode=#{menuCode}
+	</update>
+	
+	<select id="getUserSelectedMenu" resultMap="sysmenu" parameterType="string">
+		SELECT T3.MENUCODE, T3.MENUNAME, nvl(T3.MENUURL,'@') MENUURL, nvl(T3.PARENTMENU,'0') PARENTMENU,T3.MENUORDER,T3.MENUCREATER
+		FROM RMM_USER T1,RMM_USER_MENU T2,RMM_MENU T3 
+		WHERE T1.USERCODE = T2.USERCODE 
+		AND T2.MENUCODE = T3.MENUCODE 
+		AND T1.USERCODE = #{userCode} 
+		AND T3.MENUSTATUS !=0 
+	</select>
+	
+	<select id="getUserCanSelectMenu" resultMap="sysmenu" parameterType="string">
+		SELECT T3.MENUCODE, T3.MENUNAME, nvl(T3.MENUURL,'@') MENUURL, nvl(T3.PARENTMENU,'0') PARENTMENU,T3.MENUORDER,T3.MENUCREATER
+		FROM RMM_MENU T3
+		WHERE  T3.MENUSTATUS !=0
+		AND NOT EXISTS (
+		SELECT 'X' FROM RMM_USER_MENU T2 WHERE T2.MENUCODE=T3.MENUCODE AND  T2.USERCODE = #{userCode}
+		)
+	</select>
+	
+	<update id="updateMenu" parameterType="string">
+		update  rmm_menu set MENUNAME=#{text},MENUURL=#{url},PARENTMENU=#{parentMenu},MENUORDER=${menuOrder},MENUCREATETIME=sysdate
+		where menuCode=#{menuCode}
+	</update>
+	
+	<select id="getMenuByCode" resultMap="sysmenu" parameterType="string">
+		select * from rmm_menu
+		where menuCode = #{menuCode}
+	</select>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

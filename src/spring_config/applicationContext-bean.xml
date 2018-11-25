@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+   
+   
+   <bean name="sysUserService" class="com.lanzx.rmmsys.service.impl.SysUserServicImpl" scope="prototype">
+   		<property name="userDao" ref="sysUserDao" />
+   </bean>
+   
+   <bean name="menuService" class="com.lanzx.rmmsys.service.impl.SysMenuServiceImpl" scope="prototype">
+   		<property name="menuDao" ref="sysMenuDao" />
+   </bean>
+	
+   <bean name="requirementService" class="com.lanzx.rmmsys.service.impl.SysRequirementServiceImpl" scope="prototype">
+   		<property name="requirementDao" ref="sysRequirementDao" />
+   </bean>
+   
+   <bean name="taskService" class="com.lanzx.rmmsys.service.impl.SysTaskServiceImpl" scope="prototype">
+   		<property name="taskDao" ref="sysTaskDao" />
+   </bean>
+   
+   <bean name="fileService" class="com.lanzx.rmmsys.service.impl.FileServiceImpl" scope="prototype">
+   		<property name="fileDao" ref="fileDao" />
+   </bean>
+	
+   <bean name="logService" class="com.lanzx.rmmsys.service.impl.LogServiceImpl" scope="prototype">
+   		<property name="logDao" ref="logDao" />
+   </bean>
+   
+    <bean name="paraService" class="com.lanzx.rmmsys.service.impl.SysParaServiceImpl" scope="prototype">
+   		<property name="paraDao" ref="paraDao" />
+   </bean>
+   
+    <bean name="vactionService" class="com.lanzx.rmmsys.service.impl.VactionServiceImpl" scope="prototype">
+   		<property name="vacationDao" ref="vacationDao" />
+   </bean>
+   
+    <bean name="backDataTaskService" class="com.lanzx.rmmsys.service.impl.BackDataTaskServiceImpl" scope="prototype">
+   		<property name="springTaskDao" ref="springTaskDao" />
+   </bean>
+   
+    <bean name="projectService" class="com.lanzx.rmmsys.service.impl.ProjectServiceImpl" scope="prototype">
+   		<property name="projectDao" ref="projectDao" />
+   </bean>
+   
+    <bean name="workRecordService" class="com.lanzx.rmmsys.service.impl.WorkRecordServiceImpl" scope="prototype">
+   		<property name="workRecordDao" ref="workRecordDao" />
+   </bean>
+   
+    <bean name="applyService" class="com.lanzx.rmmsys.service.impl.ApplyServiceImpl" scope="prototype">
+   		<property name="requirementApplyDao" ref="requirementApplyDao" />
+   		<property name="applyTaskDao" ref="rApplyTaskDao" />
+   </bean>
+	
+	 <bean name="manhaurListService" class="com.lanzx.rmmsys.service.impl.ManhaurListServiceImpl" scope="prototype">
+   		<property name="manhaurListDao" ref="manhaurListDao" />
+   		<property name="manhaurListSumDao" ref="manhaurListSumDao" />
+   		<property name="projectTrackDao" ref="projectTrackDao" />
+   		
+   </bean>
+</beans>

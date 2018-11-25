@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="rApplyTaskRelation">
+	
+	<resultMap type="rApplyTaskRelation" id="rApplyTaskRelation">
+		<result property="applyCode" column="applyCode" javaType="string" />
+		<result property="taskCode" column="taskcode" javaType="string" />
+	</resultMap>
+	
+	<sql id="myWhere" >
+	<if test="applyCode!=null"> and t.applyCode = '${applyCode}'  </if>
+	<if test="taskCode!=null"> and t.taskCode = '${taskCode}'  </if>
+	</sql>
+	
+	<insert id="insertRApplyTaskRelation" parameterType="rApplyTaskRelation">
+		insert into RMM_APPLY_TASK
+  (applycode, taskCode) 
+	values
+  (#{applyCode,jdbcType=VARCHAR}, #{taskCode,jdbcType=VARCHAR})
+	</insert>
+	
+	<delete id="deleteRApplyTaskRelation" parameterType="String" >
+		delete from RMM_APPLY_TASK where 
+		applycode=#{applycode}
+	</delete>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="log">
+	
+	<resultMap type="log" id="log">
+		<result property="logCode" column="logCode" javaType="string" />
+		<result property="logTime" column="logTime" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="taskCode" column="taskCode" javaType="string" />
+		<result property="logCreator" column="logCreator" javaType="string" />
+		<result property="logText" column="logText" javaType="string"/>
+		<result property="requirementId" column="requirementId" javaType="string"/>
+	</resultMap>
+	
+	<sql id="logColumn" >logCode, TO_CHAR(to_DATE(logtime,'YYYYMMDDHH24MISS'),'YYYY-MM-DD HH24:MI:SS') logTime, requirementCode, taskCode,logCreator,logText,requirementId</sql>
+	<sql id="myWhere" >
+	<if test="logCode!=null"> and logCode = '${logCode}'  </if>
+	<if test="logTime!=null"> and logTime >= '${logTime}'  </if>
+	<if test="requirementId!=null"> and requirementId = '${requirementId}'  </if>
+	<if test="requirementCode!=null and taskCode!=null"> and (  requirementCode = '${requirementCode}' or taskCode = '${taskCode}' ) </if>
+	<if test="logText!=null"> and logText like '%${logText}%'  </if>
+	<if test="taskCode!=null and  requirementCode==null"> and taskCode = '${taskCode}'  </if>
+	<if test="taskCode==null and requirementCode!=null"> and requirementCode = '${requirementCode}'  </if>
+	<if test="logCreator!=null"> and logCreator = '${logCreator}'  </if>
+	</sql>
+	<select id="getLog" resultMap="log" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="logColumn"/>  
+				from RMM_LOG 
+				WHERE 1=1 
+				<include refid="myWhere"/>
+				order by LOGTIME asc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalLog" resultType="Integer" parameterType="map">
+	select count(*) 
+	from RMM_LOG 
+	WHERE 1=1  
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertLog" parameterType="log">
+		insert into RMM_LOG(logCode,logTime,requirementCode,taskCode,logCreator,logText,requirementId) values(#{logCode,jdbcType=VARCHAR},#{logTime,jdbcType=VARCHAR},#{requirementCode,jdbcType=VARCHAR},#{taskCode,jdbcType=VARCHAR},#{logCreator,jdbcType=VARCHAR},#{logText,jdbcType=VARCHAR},#{requirementId,jdbcType=VARCHAR})
+	</insert>
+	
+	
+</mapper>

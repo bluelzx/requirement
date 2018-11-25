@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+	PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<settings>
+		<setting name="cacheEnabled" value="true"/>  
+		<setting name="lazyLoadingEnabled" value="true"/>  
+		<setting name="multipleResultSetsEnabled" value="true"/>  
+		<setting name="useColumnLabel" value="true"/>  
+		<setting name="useGeneratedKeys" value="true"/>  
+		<setting name="defaultExecutorType" value="SIMPLE"/>  
+		<setting name="defaultStatementTimeout" value="25000"/>  
+	</settings>
+	<typeAliases>
+		<typeAlias type="com.lanzx.rmmsys.entity.User"
+			alias="sysuser" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Menu"
+			alias="sysmenu" />
+		<typeAlias type="com.lanzx.rmmsys.entity.UserMenu"
+			alias="userMenu" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Requirement"
+			alias="requirement" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Task"
+			alias="task" />
+		<typeAlias type="com.lanzx.rmmsys.entity.UserWork"
+			alias="userWork" />
+		<typeAlias type="com.lanzx.rmmsys.entity.UploadFile"
+			alias="file" />
+		<typeAlias type="com.lanzx.rmmsys.entity.TaskDependable"
+			alias="taskDependable" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Log"
+			alias="log" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Parameter"
+			alias="para" />
+		<typeAlias type="com.lanzx.rmmsys.entity.TaskHaurs"
+			alias="taskHaurs" />
+		<typeAlias type="com.lanzx.rmmsys.entity.RequirementCount"
+			alias="RequirementCount" />
+		<typeAlias type="com.lanzx.rmmsys.entity.TaskRCounts"
+			alias="TaskRCounts" />
+		<typeAlias type="com.lanzx.rmmsys.entity.TaskSignIn"
+			alias="TaskSignIn" />
+		<typeAlias type="com.lanzx.rmmsys.entity.TodayTaskSignIn"
+			alias="TodayTaskSignIn" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Vacation"
+			alias="Vacation" />
+		<typeAlias type="com.lanzx.rmmsys.entity.ReportWeek"
+			alias="ReportWeek" />
+		<typeAlias type="com.lanzx.rmmsys.entity.Project"
+			alias="project" />
+		<typeAlias type="com.lanzx.rmmsys.entity.WorkRecordToTal"
+			alias="workRecordToTal" />
+		<typeAlias type="com.lanzx.rmmsys.entity.WorkRecordDetail"
+			alias="workRecordDetail" />
+		<typeAlias type="com.lanzx.rmmsys.entity.RequirementTestApply"
+			alias="requirementTestApply" />
+		<typeAlias type="com.lanzx.rmmsys.entity.RApplyTaskRelation"
+			alias="rApplyTaskRelation" />
+		<typeAlias type="com.lanzx.rmmsys.entity.TaskAlarm"
+			alias="taskAlarm" />	
+		<typeAlias type="com.lanzx.rmmsys.entity.ManhaurList"
+			alias="manhaurList" />
+		<typeAlias type="com.lanzx.rmmsys.entity.ManhaurListSum"
+			alias="manhaurListSum" />	
+		<typeAlias type="com.lanzx.rmmsys.entity.ProjectTrack"
+			alias="projectTrack" />	
+	</typeAliases>
+	
+	
+	<mappers>
+		<mapper resource="./mybatis_config/SysUser.xml"/>
+		<mapper resource="./mybatis_config/SysMenu.xml"/>
+		<mapper resource="./mybatis_config/SysRequirement.xml"/>
+		<mapper resource="./mybatis_config/SysTask.xml"/>
+		<mapper resource="./mybatis_config/File.xml"/>
+		<mapper resource="./mybatis_config/Log.xml"/>
+		<mapper resource="./mybatis_config/SysPara.xml"/>
+		<mapper resource="./mybatis_config/Vacation.xml"/>
+		<mapper resource="./mybatis_config/SpringTask.xml"/>
+		<mapper resource="./mybatis_config/sysProject.xml"/>
+		<mapper resource="./mybatis_config/WorkRecord.xml"/>
+		<mapper resource="./mybatis_config/RaApply.xml"/>
+		<mapper resource="./mybatis_config/RapplyTask.xml"/>
+		<mapper resource="./mybatis_config/TaskAlarm.xml"/>
+		<mapper resource="./mybatis_config/ManhaurList.xml"/>
+		<mapper resource="./mybatis_config/ManhaurSum.xml"/>
+		<mapper resource="./mybatis_config/ProjectTrack.xml"/>
+	</mappers>
+</configuration>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="para">
+	
+	<resultMap type="para" id="para">
+		<result property="paraType" column="paraType" javaType="string" />
+		<result property="paraCode" column="paraCode" javaType="string" />
+		<result property="paraValue" column="paraValue" javaType="string" />
+		<result property="paraRemark" column="paraRemark" javaType="string" />
+	</resultMap>
+	
+	<sql id="paraColumn" >para_Type paraType,para_Code paraCode,para_Value paraValue,para_Remark paraRemark</sql>
+	<sql id="myWhere" >
+	<if test="paraType!=null"> and para_Type = '${paraType}'  </if>
+	<if test="paraCode!=null"> and para_Code = '${paraCode}'  </if>
+	</sql>
+	<select id="getParas" resultMap="para" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="paraColumn"/>  
+				from RMM_PARA 
+				WHERE 1=1 
+				<include refid="myWhere"/>
+				order by para_Type desc,to_number(para_Code) asc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalPara" resultType="Integer" parameterType="map">
+	select count(*) 
+	from RMM_PARA 
+	WHERE 1=1  
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertPara" parameterType="para">
+		insert into RMM_PARA(para_Type,para_Code,para_Value,para_Remark) values(#{paraType},#{paraCode},#{paraValue,jdbcType=VARCHAR},#{paraRemark,jdbcType=VARCHAR})
+	</insert>
+	
+	<update id="updatePara" parameterType="para">
+		update  RMM_PARA set para_Value=#{paraValue,jdbcType=VARCHAR},para_Remark=#{paraRemark,jdbcType=VARCHAR}
+		where para_Type = #{paraType} and para_Code=#{paraCode}
+	</update>
+	
+	<delete id="deletePara" parameterType="para">
+		delete from RMM_PARA 
+		where para_Type = #{paraType} and para_Code=#{paraCode}
+	</delete>
+	
+	<select id="getParaByTypeAndCode" resultType="para" parameterType="para">
+		select <include refid="paraColumn"/>  
+				from RMM_PARA 
+				WHERE 1=1 
+				<include refid="myWhere"/>
+	</select>
+	
+</mapper>

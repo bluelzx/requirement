@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="workRecord">
+	
+	<resultMap type="workRecordToTal" id="workRecordToTal">
+		<result property="userCode" column="userCode" javaType="string" />
+		<result property="userName" column="userName" javaType="string" />
+		<result property="manhour" column="manhour" javaType="double" jdbcType="NUMERIC" />
+		<result property="othour" column="othour" javaType="double" jdbcType="NUMERIC" />
+	</resultMap>
+	
+	<resultMap type="workRecordDetail" id="workRecordDetail">
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="requirementName" column="requirementName" javaType="string" />
+		<result property="taskCode" column="taskCode" javaType="string" />
+		<result property="taskName" column="taskName" javaType="string" />
+		<result property="userCode" column="userCode" javaType="string" />
+		<result property="userName" column="userName" javaType="string" />
+		<result property="createTime" column="createTime" javaType="string" />
+		<result property="remark" column="remark" javaType="string" />
+		<result property="manhour" column="manhour" javaType="double" jdbcType="NUMERIC" />
+		<result property="othour" column="othour" javaType="double" jdbcType="NUMERIC" />
+		<result property="sumMan" column="sumMan" javaType="double" jdbcType="NUMERIC" />
+		<result property="sumOt" column="sumOt" javaType="double" jdbcType="NUMERIC" />
+	</resultMap>
+	
+	
+	
+	<select id="getAllWorkRecordToTal" resultMap="workRecordToTal" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select b4.usercode userCode,
+			       b4.username userName,
+			       nvl(m.manhour, 0) manhour,
+			       nvl(m.othour, 0) othour
+			  from RMM_USER B4
+			  left join (SELECT distinct B1.usercode userCode,
+			                             SUM(B1.manhour) OVER(PARTITION BY B1.usercode) manhour,
+			                             SUM(B1.othour) OVER(PARTITION BY B1.usercode) othour
+			               FROM (select t1.usercode,
+			                            t1.taskcode,
+			                            t1.manhour,
+			                            t1.othour,
+			                            rank() over(partition by t1.taskcode, t1.usercode order by t1.createtime desc) rnk
+			                       from rmm_task_signin t1
+			                      where to_char(t1.createtime, 'yyyymmdd') = #{workDate}) B1,
+			                    RMM_TASK B2,
+			                    RMM_REQUIREMENT B3
+			              WHERE B1.taskcode = B2.TASKCODE
+			                AND B2.REQUIREMENTID = B3.REQUIREMENTID
+			                AND B1.rnk = 1
+			              ORDER BY B1.usercode) m on b4.usercode = m.userCode 
+			  <![CDATA[             
+			 where b4.usercode <> 'admin' 
+			  ]]>
+			   and b4.userstatus = '1'
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getWorkRecordToTalCount" resultType="Integer" parameterType="map">
+	
+	 select count(*)
+			  from RMM_USER B4
+			  <![CDATA[             
+			 where b4.usercode <> 'admin' 
+			  ]]>
+			   and b4.userstatus = '1'
+	       
+	</select>
+	
+	<select id="getWorkDetail" resultType="workRecordDetail" parameterType="map">
+		select F1.usercode userCode,
+       F1.USERNAME userName,
+       nvl(F2.REQUIREMENTNAME, '') requirementName,
+       nvl(F2.requirementCode, '') requirementCode,
+       nvl(F2.TASKCODE, '') taskCode,
+       nvl(F2.TASKNAME, '') taskName,
+       nvl(F2.manhour, 0) manhour,
+       nvl(F2.othour, 0) othour,
+       nvl(F2.remark, '') remark,
+       nvl(F2.createTime, '') createTime,
+       nvl(F2.SUMMAN, 0) sumMan,
+       nvl(F2.SUMOT, 0) sumOt
+  FROM RMM_USER F1
+  LEFT JOIN (SELECT T1.*, T2.SUMMAN sumMan, T2.SUMOT sumOt
+               FROM (SELECT B1.usercode,
+                            B4.USERNAME,
+                            B3.REQUIREMENTNAME requirementName,
+                            B3.requirementCode requirementCode,
+                            B1.TASKCODE taskCode,
+                            B2.TASKNAME taskName,
+                            B1.manhour,
+                            B1.othour,
+                            B1.remark,
+                            B1.createTime
+                       FROM (select t1.taskcode,
+                                    t1.usercode,
+                                    t1.manhour,
+                                    t1.othour,
+                                    t1.remark,
+                                    to_char(t1.createtime,
+                                            'yyyymmdd HH24:MI:SS') createtime,
+                                    rank() over(partition by t1.usercode, t1.taskcode, to_char(t1.createtime, 'yyyymmdd') order by t1.createtime desc) rnk
+                               from rmm_task_signin t1
+                              where to_char(t1.createtime, 'yyyymmdd') =
+                                    #{workDate}) B1,
+                            RMM_TASK B2,
+                            RMM_REQUIREMENT B3,
+                            RMM_USER B4
+                      WHERE B1.taskcode = B2.TASKCODE
+                        AND B2.REQUIREMENTID = B3.REQUIREMENTID
+                        AND B1.usercode = B4.USERCODE
+                        AND B1.rnk = 1) T1
+               LEFT JOIN (SELECT B2.taskcode,
+                                NVL(SUM(B1.manhour), 0) SUMMAN,
+                                NVL(SUM(B1.othour), 0) SUMOT
+                           FROM (select t1.taskcode,
+                                        t1.usercode,
+                                        t1.manhour,
+                                        t1.othour,
+                                        t1.remark,
+                                        to_char(t1.createtime,
+                                                'yyyymmdd HH24:MI:SS') createtime,
+                                        rank() over(partition by t1.usercode, t1.taskcode, to_char(t1.createtime, 'yyyymmdd') order by t1.createtime desc) rnk
+                                   from rmm_task_signin t1 
+                                    <![CDATA[
+                                  WHERE t1.createtime <=
+                                        TO_DATE(#{workDate} || ' 23:59:59',
+                                                'yyyymmdd HH24:MI:SS')) B1,
+                                 RMM_TASK B2
+                          WHERE B1.taskcode = B2.taskcode
+                            AND B1.rnk = 1
+                          GROUP BY B2.taskcode) T2 ON T1.TASKCODE =
+                                                      T2.taskcode) F2 ON F1.USERCODE =
+                                                                         F2.USERCODE
+ WHERE F1.USERCODE <> 'admin'
+   and F1.Userstatus = '1'
+ ORDER BY F1.usercode, F1.createtime desc
+ ]]>
+		
+	</select>
+	
+	
+	<select id="getWorkRecordDetail" resultType="workRecordDetail" parameterType="map">
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		SELECT B3.REQUIREMENTNAME requirementName,
+	       			   B3.requirementCode requirementCode, 
+	       			   B1.TASKCODE taskCode,
+				       B2.TASKNAME taskName,
+				       B1.manhour,
+				       B1.othour,
+				       B1.remark,
+				       B1.createTime
+				  FROM (select t1.taskcode,
+				               t1.usercode,
+				               t1.manhour,
+				               t1.othour,
+				               t1.remark,
+				               to_char(t1.createtime, 'yyyymmdd HH24:MI:SS') createtime,
+				               rank() over(partition by t1.taskcode order by t1.createtime desc) rnk
+				          from rmm_task_signin t1
+				         where to_char(t1.createtime, 'yyyymmdd') = #{workDate} 
+				         and t1.usercode=#{userCode}
+				         ) B1,
+				       RMM_TASK B2,
+				       RMM_REQUIREMENT B3,
+				       RMM_USER B4
+				 WHERE B1.taskcode = B2.TASKCODE
+				   AND B2.REQUIREMENTID = B3.REQUIREMENTID
+				   AND B1.usercode = B4.USERCODE
+				   AND B1.rnk = 1
+				 ORDER BY B1.createtime desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getWorkRecordDetailCount" resultType="Integer" parameterType="map">
+	select count(*)
+	       from (
+	       		SELECT B3.REQUIREMENTNAME requirementName,
+	       			   B3.requirementCode requirementCode, 
+	       			   B1.TASKCODE taskCode,
+				       B2.TASKNAME taskName,
+				       B1.manhour,
+				       B1.othour,
+				       B1.remark,
+				       B1.createTime
+				  FROM (select t1.taskcode,
+				               t1.usercode,
+				               t1.manhour,
+				               t1.othour,
+				               t1.remark,
+				               to_char(t1.createtime, 'yyyymmdd HH24:MI:SS') createtime,
+				               rank() over(partition by t1.taskcode order by t1.createtime desc) rnk
+				          from rmm_task_signin t1
+				         where to_char(t1.createtime, 'yyyymmdd') = #{workDate} 
+				         and t1.usercode=#{userCode}
+				         ) B1,
+				       RMM_TASK B2,
+				       RMM_REQUIREMENT B3,
+				       RMM_USER B4
+				 WHERE B1.taskcode = B2.TASKCODE
+				   AND B2.REQUIREMENTID = B3.REQUIREMENTID
+				   AND B1.usercode = B4.USERCODE
+				   AND B1.rnk = 1
+				 ORDER BY B1.createtime desc
+	       ) AA 
+	</select>
+	
+</mapper>

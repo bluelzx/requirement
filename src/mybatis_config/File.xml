@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="file">
+	
+	<resultMap type="file" id="file">
+		<result property="fileCode" column="fileCode" javaType="string" />
+		<result property="fileName" column="fileName" javaType="string" />
+		<result property="filePath" column="filePath" javaType="string" />
+		<result property="userCode" column="userCode" javaType="string" />
+		<result property="uploadTime" column="uploadTime" javaType="string"/>
+		<result property="requirementId" column="requirementId" javaType="string"/>
+		<result property="fileSize" column="fileSize" javaType="long" jdbcType="INTEGER"/>
+		<result property="fileType" column="fileType" javaType="string"/>
+	</resultMap>
+	
+	<sql id="fileColumn" >fileCode,fileName,filePath,userCode,uploadTime,requirementId,fileSize,fileType</sql>
+	<sql id="myWhere" >
+	<if test="fileCode!=null"> and fileCode like '%${fileCode}%'  </if>
+	<if test="fileName!=null"> and fileName like '%${fileName}%'  </if>
+	<if test="userCode!=null"> and userCode like '%${userCode}%'  </if>
+	<if test="requirementId"> and requirementId=#{requirementId}  </if>
+	</sql>
+	<select id="getFileList" resultMap="file" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="fileColumn"/>  
+				from rmm_file 
+				WHERE 1=1 
+				<include refid="myWhere"/>
+				order by uploadTime desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalFile" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_file 
+	WHERE 1=1 
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertFile" parameterType="file">
+		insert into rmm_file(fileCode,fileName,filePath,userCode,uploadTime,requirementId,fileSize,fileType) 
+		values(#{fileCode},#{fileName},#{filePath},#{userCode},#{uploadTime},#{requirementId},#{fileSize},#{fileType})
+	</insert>
+	
+	<delete id="deleteFile" parameterType="string" >
+		delete from rmm_file
+		where fileCode = #{fileCode}
+	</delete>
+	
+	<select id="getFileByCode" resultType="file" parameterType="string">
+	select * 
+	from rmm_file 
+	WHERE fileCode = #{fileCode}
+	</select>
+	
+	<update id="updateTmpFile" parameterType="file">
+		update  rmm_file set requirementId=#{requirementId},filePath=#{filePath}
+		where fileCode = #{fileCode}
+	</update>
+	
+	<select id="getNeedMoveFile" resultType="file" >
+	select t1.fileCode,t1.fileName,t1.filePath,t1.requirementId from rmm_file t1 
+where not exists (
+ select 'x' from rmm_file@hz66 t2
+ where t1.filecode=t2.filecode 
+)
+	</select>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

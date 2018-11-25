@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="task">
+	
+	<resultMap type="task" id="task">
+		<result property="taskCode" column="taskcode" javaType="string" />
+		<result property="taskName" column="taskname" javaType="string" />
+		<result property="remark" column="remark" javaType="string" />
+		<result property="startTime" column="starttime" javaType="string" />
+		<result property="endTime" column="endtime" javaType="string" />
+		<result property="taskType" column="tasktype" javaType="int" jdbcType="INTEGER" />
+		<result property="requirementId" column="requirementId" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="requirementName" column="requirementName" javaType="string" />
+		<result property="taskGroup" column="taskgroup" javaType="string" />
+		<result property="signTime" column="signTime" javaType="string" />
+		<result property="isLongTerm" column="isLongTerm" javaType="string" />
+		<result property="planFinishTime" column="planFinishTime" javaType="string" />
+		<result property="planManHaur" column="planmanhaur" javaType="double" jdbcType="NUMERIC" />
+		<result property="manHaur" column="manhaur" javaType="double" jdbcType="NUMERIC" />
+		<result property="status" column="status" javaType="int" jdbcType="INTEGER"/>
+		<result property="userCode" column="usercode" javaType="string" />
+		<result property="creator" column="creator" javaType="string" />
+		<result property="closeTime" column="closeTime" javaType="string" />
+		<result property="launchDate" column="launchDate" javaType="string" />
+		<result property="urgent" column="urgent" javaType="int" jdbcType="INTEGER"/>
+		<result property="isSignIn" column="isSignIn" javaType="int" jdbcType="INTEGER"/>
+		<result property="sManHour" column="sManHour" javaType="double" jdbcType="NUMERIC" />
+		<result property="otHour" column="otHour" javaType="double" jdbcType="NUMERIC" />
+	</resultMap>
+	
+	<resultMap type="taskDependable" id="taskDependable">
+		<result property="taskCode" column="taskcode" javaType="string" />
+		<result property="dependableCode" column="dependablecode" javaType="string" />
+	</resultMap>
+	
+	<resultMap type="taskHaurs" id="taskHaurs">
+		<result property="taskType" column="taskType" javaType="string" />
+		<result property="avgPlan" column="avgPlan" javaType="string" />
+		<result property="avgMan" column="avgMan" javaType="string" />
+		<result property="maxMan" column="maxMan" javaType="string" />
+		<result property="minMan" column="minMan" javaType="string" />
+		<result property="counts" column="counts" javaType="string" />
+	</resultMap>
+	
+	<resultMap type="TaskRCounts" id="TaskRCounts">
+		<result property="taskRtype" column="taskRtype" javaType="string" />
+		<result property="taskBeginCount" column="taskBeginCount" javaType="string" />
+		<result property="taskDoingCount" column="taskDoingCount" javaType="string" />
+		<result property="taskOverdueCount" column="taskOverdueCount" javaType="string" />
+	</resultMap>
+	
+	<resultMap type="TaskSignIn" id="TaskSignIn">
+		<result property="taskCode" column="taskCode" javaType="string" />
+		<result property="userCode" column="userCode" javaType="string" />
+		<result property="createTime" column="createTime" javaType="string" />
+		<result property="remark" column="remark" javaType="string" />
+		<result property="weightRatio" column="weightRatio" javaType="int" jdbcType="INTEGER"/>
+		<result property="manHaur" column="manhaur" javaType="double" jdbcType="NUMERIC" />
+		<result property="otHaur" column="othaur" javaType="int" jdbcType="INTEGER" />
+		<result property="taskName" column="taskName" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="requirenmentName" column="requirenmentName" javaType="string" />
+		<result property="signInCode" column="signInCode" javaType="string" />
+	</resultMap>
+	
+	<resultMap type="TodayTaskSignIn" id="TodayTaskSignIn">
+		<result property="userName" column="userName" javaType="string" />
+		<result property="taskC1" column="taskC1" javaType="int" jdbcType="INTEGER"/>
+		<result property="taskC2" column="taskC2" javaType="int" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<resultMap type="ReportWeek" id="ReportWeek">
+		<result property="dataDate" column="dataDate" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="remark" column="remark" javaType="string" />
+		<result property="manHaur" column="manhaur" javaType="double" jdbcType="NUMERIC" />
+	</resultMap>
+	
+	<select id="getTaskHaurs" resultType="taskHaurs" >
+		select k.para_value taskType,
+	       trunc(avg(t.planmanhaur), 2) avgPlan,
+	       trunc(avg(t.manhaur), 2) avgMan,
+	       max(t.manhaur) maxMan,
+	       min(t.manhaur) minMan,
+	       count(1) counts
+	  from rmm_task t, rmm_para k 
+	where  t.tasktype = k.para_code 
+	and k.para_type='1' 
+	and t.status in ('3','6') 
+	and t.manhaur is not null 
+	and t.planmanhaur is not null 
+	group by k.para_value 
+	</select>
+	
+	<select id="getTaskCounts" resultType="TaskRCounts">
+	<![CDATA[
+		select  p.para_value taskRtype, sum(acounts) taskBeginCount,sum(bcounts) taskDoingCount,sum(ccounts) taskOverdueCount
+  from (select t.tasktype, count(1) acounts,0 bcounts, 0 ccounts
+          from rmm_task t
+         where t.status = 1
+           and t.planmanhaur is not null
+         group by t.tasktype
+        
+        union all
+        select t.tasktype,0 acounts, count(1) bcounts,0 ccounts
+          from rmm_task t
+         where t.status = 2
+           and t.planmanhaur is not null
+           and (sysdate - to_date(t.signtime, 'yyyymmdd')) <= t.planmanhaur
+         group by t.tasktype
+        union all
+        select t.tasktype, 0 acounts, 0 bcounts,count(1) ccounts
+          from rmm_task t
+         where t.status = 2
+           and t.planmanhaur is not null
+           and (sysdate - to_date(t.signtime, 'yyyymmdd')) > t.planmanhaur
+         group by t.tasktype) d,
+       rmm_para p
+ where d.tasktype = p.para_code
+   and p.para_type = '1'
+   group by p.para_value
+		]]>
+	</select>
+	
+	<sql id="taskColumn" >t1.launchDate,t1.taskcode, t1.taskname, t1.remark, t1.starttime, t1.endtime, t1.signTime,t1.status, t1.tasktype, t1.requirementId,t1.taskgroup, t1.planmanhaur, t1.manhaur,t1.usercode,t1.closeTime,t1.urgent,t1.planFinishTime,t1.isLongTerm,t1.creator</sql>
+	<sql id="myWhere" >
+	<if test="requirementId!=null"> and t1.requirementId = '${requirementId}'  </if>
+	<if test="taskCode!=null"> and t1.taskcode like '%${taskCode}%'  </if>
+	<if test="taskType!=null"> and t1.tasktype = ${taskType}  </if>
+	<if test="taskGroup!=null"> and t1.taskgroup = ${taskGroup}  </if>
+	<if test="status!=null"> and t1.status = ${status}  </if>
+	<if test="urgent!=null"> and t1.urgent = ${urgent}  </if>
+	<if test="userCode!=null"> and t1.usercode  = '${userCode}'  </if>
+	<if test="launchDate!=null"> and t1.launchDate  = '${launchDate}'  </if>
+	<if test="isLongTerm!=null"> and t1.isLongTerm  = '${isLongTerm}'  </if>
+	</sql>
+	<select id="getAllTask"  resultMap="task" parameterType="map">
+	select *
+	from (
+	SELECT P1.*,CASE WHEN P2.TASKCODE IS NULL THEN 0 ELSE 1 END isSignIn,p2.manHour sManHour,p2.otHour
+	FROM (
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		
+				 <if test="requirementCode!=null"> 
+				 select <include refid="taskColumn"/> ,t2.requirementCode,t2.requirementName 
+				 from rmm_task t1 , rmm_requirement t2 
+				 where t1.requirementid=t2.requirementid 
+				 and t2.requirementCode  = '${requirementCode}'  
+				  and  t1.status != 0 
+				<include refid="myWhere"/> 
+				 order by t1.taskcode desc
+				 </if> 
+				 
+				  <if test="requirementCode==null"> 
+				   select <include refid="taskColumn"/> ,t2.requirementCode,t2.requirementName 
+				 from rmm_task t1 left join rmm_requirement t2 
+				 on t1.requirementid=t2.requirementid 
+				  where  t1.status != 0 
+				<include refid="myWhere"/> 
+				 order by  t1.taskcode desc
+				  </if> 
+				
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+       ) P1 LEFT JOIN (select t1.taskcode, t2.manHour,t2.otHour
+  from (select distinct t.taskcode, max(t.createtime) createtime
+          FROM RMM_TASK_SIGNIN T
+         WHERE TO_CHAR(T.CREATETIME, 'yyyyMMdd') =
+               TO_CHAR(SYSDATE, 'yyyyMMdd')
+         group by t.taskcode) t1
+  left join RMM_TASK_SIGNIN t2 on t1.taskcode = t2.taskcode
+                              and t1.createtime = t2.createtime
+                              and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') =
+                                  TO_CHAR(SYSDATE, 'yyyyMMdd')) P2 ON P1.taskcode=P2.taskcode
+              )
+           <if test="isSignIn!=null">
+         where isSignIn=#{isSignIn} 
+         </if>                       
+	</select>
+	
+	
+	<select id="getTotalTask" resultType="Integer" parameterType="map">
+	select count(*) 
+	from (
+	select p1.*,CASE WHEN P2.TASKCODE IS NULL THEN 0 ELSE 1 END isSignIn
+	from ( 
+		 <if test="requirementCode!=null"> 
+				 select <include refid="taskColumn"/> ,t2.requirementCode 
+				 from rmm_task t1 , rmm_requirement t2 
+				 where t1.requirementid=t2.requirementid 
+				 and t2.requirementCode  = '${requirementCode}'  
+				  and  t1.status != 0 
+				<include refid="myWhere"/> 
+				 </if> 
+				 
+				  <if test="requirementCode==null"> 
+				   select <include refid="taskColumn"/> ,t2.requirementCode 
+				 from rmm_task t1 left join rmm_requirement t2 
+				 on t1.requirementid=t2.requirementid 
+				  where  t1.status != 0 
+				<include refid="myWhere"/> 
+				  </if> 
+	)  P1 LEFT JOIN (select t1.taskcode, t2.weightratio
+  from (select distinct t.taskcode, max(t.createtime) createtime
+          FROM RMM_TASK_SIGNIN T
+         WHERE TO_CHAR(T.CREATETIME, 'yyyyMMdd') =
+               TO_CHAR(SYSDATE, 'yyyyMMdd')
+         group by t.taskcode) t1
+  left join RMM_TASK_SIGNIN t2 on t1.taskcode = t2.taskcode
+                              and t1.createtime = t2.createtime
+                              and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') =
+                                  TO_CHAR(SYSDATE, 'yyyyMMdd')) P2 ON P1.taskcode=P2.taskcode
+                                  )
+         <if test="isSignIn!=null">
+         where isSignIn=#{isSignIn} 
+         </if>                     
+	</select>
+	
+	<select id="getTotalUnFinishTask" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_task t1
+	WHERE  requirementId = '${requirementId}'
+	and status in (1,2,4,5,-1)
+	</select>
+	
+	<select id="getTotalDDTask" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_task t1
+	WHERE  requirementId = '${requirementId}'
+	and status not in (1,-1)
+	</select>
+	
+	<insert id="insertTask" parameterType="task">
+		insert into rmm_task(requirementId,taskcode, taskname, remark, starttime, endtime, status, tasktype,  taskgroup,planFinishTime, planmanhaur, manhaur,userCode,urgent,isLongTerm,creator)
+		 values(#{requirementId,jdbcType=VARCHAR},#{taskCode},#{taskName},#{remark},#{startTime,jdbcType=VARCHAR},#{endTime,jdbcType=VARCHAR},#{status},#{taskType},#{taskGroup,jdbcType=VARCHAR},#{planFinishTime,jdbcType=VARCHAR},#{planManHaur,jdbcType=INTEGER},#{manHaur,jdbcType=INTEGER},#{userCode,jdbcType=VARCHAR},#{urgent,jdbcType=INTEGER},#{isLongTerm,jdbcType=VARCHAR},#{creator,jdbcType=VARCHAR})
+	</insert>
+	
+	<select id="getUserWorks" resultType="userWork" parameterType="map">
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	select t1.usercode,t1.username,nvl(count(t2.taskcode),0) works 
+	from rmm_user t1 left join rmm_task t2
+	on t1.usercode = t2.usercode and t2.status != 0 
+	<if test="userCode!=null"> and t2.usercode = #{userCode}  </if>
+	where t1.USERSTATUS !=0 
+	group by t1.usercode,t1.username
+	order by t1.usercode
+	) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getUserWorksTotal" resultType="Integer" parameterType="String">
+	select count(1) 
+	from (
+	select t1.usercode,t1.username,nvl(count(t2.taskcode),0) works 
+	from rmm_user t1 left join rmm_task t2
+	on t1.usercode = t2.usercode and t2.status != 0 
+	<if test="userCode!=null"> and t2.usercode = ${userCode}  </if>
+	where t1.USERSTATUS !=0 
+	group by t1.usercode,t1.username
+	)
+	</select>
+	<!-- 
+	<insert id="insertSysUserMenu" parameterType="userMenu">
+		insert into RMM_USER_MENU(USERCODE,MENUCODE,PARENTMENU)
+		<foreach collection="list" item="item" index="index" separator="union all">
+		select #{item.userCode},#{item.menuCode},#{item.parentMenu} from dual
+		</foreach>
+	</insert>
+	 -->
+	 
+	 <update id="updateTaskStatus" parameterType="task">
+	 update rmm_task set status = #{status}
+	 <where> taskcode = #{taskCode} </where>
+	 </update>
+	 
+	 <update id="updateTaskLaunch" parameterType="task">
+	 update rmm_task set launchdate = #{launchDate}
+	 <where> taskcode = #{taskCode} </where>
+	 </update>
+	 
+	 <update id="updateTaskFinishPercent" parameterType="task">
+	 update rmm_task set finishPercent = #{finishPercent}
+	 <where> taskcode = #{taskCode} </where>
+	 </update>
+	 
+	  <update id="updateTask" parameterType="task">
+	 update rmm_task set 
+	 <if test="status!=null"> status = #{status},</if>
+	 <if test="signTime!=null"> signTime = #{signTime},</if>
+	 <if test="taskName!=null"> taskName = #{taskName},</if>
+	 <if test="remark!=null"> remark = #{remark},</if>
+	 <if test="taskType!=null"> taskType = #{taskType},</if>
+	 <if test="taskGroup!=null"> taskGroup = #{taskGroup},</if>
+	 <if test="planManHaur!=null"> planManHaur = #{planManHaur},</if>
+	 <if test="userCode!=null"> userCode = #{userCode},</if>
+	 <if test="startTime!=null"> starttime = #{startTime},</if>
+	 <if test="endTime!=null"> endTime = #{endTime},</if>
+	 <if test="planFinishTime!=null"> planFinishTime = #{planFinishTime},</if>
+	 <if test="manHaur!=null"> manHaur = #{manHaur},</if>
+	 <if test="requirementId!=null"> requirementId = #{requirementId},</if>
+	 <if test="closeTime!=null"> closeTime = #{closeTime},</if>
+	 <if test="urgent!=null"> urgent = #{urgent,jdbcType=INTEGER},</if>
+	 <if test="taskCode!=null"> taskcode = #{taskCode}</if>
+	 <where> taskcode = #{taskCode} </where>
+	 </update>
+	 
+	 <select id="getTaskByCode" resultType="task" parameterType="String">
+	 	select <include refid="taskColumn"/> from rmm_task t1
+	 	<where> t1.taskcode = #{taskCode} </where>
+	 </select>
+	 
+	 <update id="disableByTaskCode" parameterType="string">
+		update  rmm_task set status=0
+		where taskcode = #{taskCode}
+	</update>
+	
+	 <update id="doLockTask" parameterType="string">
+		update  rmm_task set status=4
+		where taskcode = #{taskCode}
+	</update>
+	 
+	 <insert id="insertTaskDependable" parameterType="taskDependable">
+	 	insert into rmm_task_dependable(taskcode,dependablecode) values(#{taskCode},#{dependableCode})
+	 </insert>
+	 
+	 <select id="getDependableTaskByCode" resultType="task" parameterType="String">
+	 	select t2.taskcode, t2.taskname, t2.remark, t2.starttime, t2.endtime, t2.signTime,t2.status, t2.tasktype, t2.requirementId,t2.taskgroup, t2.planmanhaur, t2.manhaur,t2.usercode,t2.closeTime
+	 	 from rmm_task_dependable t1,rmm_task t2
+		where t1.dependablecode = t2.taskcode
+		and t1.taskcode = #{taskCode}
+	 </select>
+	 
+	 <delete id="deleteDependableTask" parameterType="String">
+	 	delete from rmm_task_dependable 
+	 	where taskcode = #{taskCode}
+	 </delete>
+	 
+	  <select id="getTaskByDependableCode" resultType="task" parameterType="String">
+	 	select t2.taskcode,t2.taskname from rmm_task_dependable t1,rmm_task t2
+		where t1.taskcode = t2.taskcode
+		and t1.dependablecode = #{taskCode}
+	 </select>
+	 
+	 <update id="updateReStatus" parameterType="task">
+		 update rmm_requirement t1 set t1.status=#{status}
+			where exists (
+			      select 'x' from rmm_task t2 where t2.taskcode=#{taskCode} and t1.requirementId = t2.requirementId
+			)
+	</update>
+	
+	<select id="doFinishTask" parameterType="map" resultType="String"  statementType="CALLABLE">
+		{ call doFinishTask(#{taskCode,mode=IN,jdbcType=VARCHAR},
+		#{startTime,mode=IN,jdbcType=VARCHAR},
+		#{endTime,mode=IN,jdbcType=VARCHAR},
+		#{manHaur,mode=IN,jdbcType=INTEGER},
+		#{newTaskCode,mode=IN,jdbcType=VARCHAR},
+		#{resultFlag,mode=OUT,jdbcType=VARCHAR}
+		) }
+	</select>
+	
+	<insert id="insertTaskSignIn" parameterType="TaskSignIn">
+	 	insert into RMM_TASK_SIGNIN(TASKCODE,USERCODE,CREATETIME,manHour,otHour,REMARK,signInCode,WEIGHTRATIO) values(#{taskCode},#{userCode},sysdate,#{manHour,jdbcType=INTEGER},#{otHour,jdbcType=INTEGER},#{remark,,jdbcType=VARCHAR},#{signInCode,,jdbcType=VARCHAR},#{weightRatio,jdbcType=INTEGER})
+	 </insert>
+	 
+	 <insert id="doBackTaskSignIn" parameterType="TaskSignIn">
+	 	insert into RMM_TASK_SIGNIN(TASKCODE,USERCODE,CREATETIME,manHour,otHour,REMARK,signInCode) values(#{taskCode},#{userCode},to_timestamp(#{createTime},'yyyyMMddhh24:mi:ss'),#{manHour,jdbcType=INTEGER},#{otHour,jdbcType=INTEGER},#{remark,,jdbcType=VARCHAR},#{signInCode,,jdbcType=VARCHAR})
+	 </insert>
+	
+	<sql id="taskSignInWhere" >
+	<if test="requirementId!=null"> and t3.requirementId = '${requirementId}'  </if>
+	<if test="requirementCode!=null"> and t3.requirementCode like '%${requirementCode}%'  </if>
+	<if test="taskCode!=null"> and t1.taskcode = '${taskCode}'  </if>
+	<if test="userCode!=null"> and t1.userCode = '${userCode}'  </if>
+	<if test="startDate!=null"> and to_char(t1.createtime,'yyyyMMdd') >= '${startDate}'  </if>
+	<if test="endDate!=null"> <![CDATA[ and to_char(t1.createtime,'yyyyMMdd') <= '${endDate}' ]]> </if>
+	</sql>
+	
+	 <select id="getAllTaskSignIn" resultType="TaskSignIn" parameterType="map">
+	 select * from (
+	       select AA.*,ROWNUM RN
+	       from ( 
+	 select t2.taskcode taskCode,
+       t2.taskname taskName,
+       t3.requirementcode requirementCode,
+       t3.requirementname requirenmentName,
+       t3.requirementid requirementId,
+       to_char(t1.createtime,'yyyyMMdd hh24:mi:ss') createTime,
+       t1.userCode,
+       t1.remark,
+       t1.manHour,
+       t1.otHour,
+       t1.signInCode
+  from rmm_task_signin t1, rmm_task t2, rmm_requirement t3
+ where t1.taskcode = t2.taskcode
+   and t2.requirementid = t3.requirementid
+   <include refid="taskSignInWhere"/> 
+ order by t1.createtime desc 
+ ) AA  <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	 </select>
+	 
+	 <select id="getTaskSignInCount" resultType="Integer" parameterType="map">
+	 select count(1)
+	       from ( 
+	 select t2.taskcode,
+       t2.taskname,
+       t3.requirementcode,
+       t3.requirementname,
+       t3.requirementid
+  from rmm_task_signin t1, rmm_task t2, rmm_requirement t3
+ where t1.taskcode = t2.taskcode
+   and t2.requirementid = t3.requirementid
+   <include refid="taskSignInWhere"/> 
+ order by t1.createtime desc 
+ )
+	 </select>
+	 
+	 <select id="getAllTodaySignIn" resultType="TodayTaskSignIn" parameterType="map">
+	 SELECT *
+	  FROM (
+	 <![CDATA[
+	 select AA.*,ROWNUM RN
+	 FROM (
+	 select t.userName, nvl(p.snmc, 0) taskC1, nvl(p.smc, 0) taskC2
+  from rmm_user t
+  left join (select sum(mc) smc, sum(nmc) snmc, usercode
+               from (select case
+                              when tasktype = 99 then
+                               mc
+                              else
+                               0
+                            end mc,
+                            case
+                              when tasktype <> 99 then
+                               mc
+                              else
+                               0
+                            end nmc,
+                            usercode
+                       from (select count(distinct h.taskcode) mc,
+                                    h.tasktype,
+                                    k.usercode
+                               from rmm_task h, rmm_task_signin k
+                              where h.taskcode = k.taskcode
+                                and to_char(k.createtime, 'yyyyMMdd') =
+                                    to_char(sysdate, 'yyyyMMdd')
+                              group by h.tasktype, k.usercode))
+              group by usercode) p on t.usercode = p.usercode
+ where t.usertype <> 0
+   and t.usercode <> 'liufeng'
+ order by taskC1 asc
+	 ) AA 
+	 WHERE ROWNUM < #{endRow}
+	 ) WHERE RN >= #{startRow}
+	   ]]>
+	 </select>
+	
+	<select id="getAllSignInCount" resultType="Integer" >
+	 SELECT COUNT(1) FROM rmm_user T 
+	 <![CDATA[
+		WHERE t.usertype <> 0
+   and t.usercode <> 'liufeng'
+   ]]>
+	</select>
+	
+	<select id="getTodayInputHour" resultType="Double" parameterType="String" >
+	select 7-nvl(sum(nvl(t2.manHour,0)),0) inputDayHour
+  from (select distinct t.taskcode, max(t.createtime) createtime
+          FROM RMM_TASK_SIGNIN T
+         WHERE TO_CHAR(T.CREATETIME, 'yyyyMMdd') =
+               TO_CHAR(SYSDATE, 'yyyyMMdd')
+               and t.usercode=#{userCode}
+         group by t.taskcode) t1
+  left join RMM_TASK_SIGNIN t2 on t1.taskcode = t2.taskcode
+                              and t1.createtime = t2.createtime
+                              and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') =
+                                  TO_CHAR(SYSDATE, 'yyyyMMdd')
+	</select>
+	
+	<select id="getInputHour" resultType="Double" parameterType="map" >
+	select 7-nvl(sum(nvl(t2.manHour,0)),0) inputDayHour
+  from (select distinct t.taskcode, max(t.createtime) createtime
+          FROM RMM_TASK_SIGNIN T
+         WHERE TO_CHAR(T.CREATETIME, 'yyyyMMdd') = #{data_date} 
+               and t.usercode=#{userCode}
+         group by t.taskcode) t1
+  left join RMM_TASK_SIGNIN t2 on t1.taskcode = t2.taskcode
+                              and t1.createtime = t2.createtime
+                              and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') = #{data_date} 
+	</select>
+	
+	<delete id="deleteTaskSignIn" parameterType="map">
+		delete from rmm_task_signin where 
+		signInCode=#{signInCode}
+	</delete>
+	
+	<select id="getReportWeek" resultType="ReportWeek" parameterType="map">
+		<![CDATA[
+		select t.datadate,y.requirementCode,y.manhour,y.remark
+from rmm_date t left join (
+select t4.requirementCode,round(t2.manhour/7,3) manhour,TO_CHAR(T2.CREATETIME, 'yyyyMMdd') dataDate,t2.remark
+  from (select distinct t.taskcode,
+                        TO_CHAR(T.CREATETIME, 'yyyyMMdd'),
+                        max(t.createtime) createtime
+          FROM RMM_TASK_SIGNIN T
+         WHERE TO_CHAR(T.CREATETIME, 'yyyyMMdd') >= '${startDate}'
+           and TO_CHAR(T.CREATETIME, 'yyyyMMdd') <= '${endDate}'
+           and t.usercode = '${userCode}'
+         group by t.taskcode, TO_CHAR(T.CREATETIME, 'yyyyMMdd')) t1,
+       RMM_TASK_SIGNIN t2,rmm_task t3,rmm_requirement t4
+ where t1.taskcode = t2.taskcode
+   and t1.createtime = t2.createtime
+   and t3.taskcode = t1.taskcode
+   and t3.requirementid=t4.requirementid
+   and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') >= '${startDate}'
+   and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') <= '${endDate}'
+   ) y on t.datadate=y.dataDate
+   where t.datadate>= '${startDate}'
+   and t.datadate<= '${endDate}'
+   order by t.datadate
+  ]]>
+	</select>
+	
+	<select id="getAllReportDevTask" resultType="task" parameterType="map">
+	select aa.*
+from (
+select <include refid="taskColumn"/>, rownum rn
+  from rmm_task t1 
+ where t1.requirementid='${requirementId}' 
+ and t1.tasktype != '99'
+<![CDATA[
+  and rownum < #{endRow} 
+ ) aa where aa.rn>= #{startRow} 
+ ]]>
+	</select>
+	
+	<select id="getAllReportDevTaskCount" resultType="Integer" parameterType="map">
+	select count(1) 
+  from rmm_task t1
+ where t1.requirementid='${requirementId}' 
+ and t1.tasktype != '99'
+	</select>
+	
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vacation">
+	
+	<resultMap type="vacation" id="vacation">
+		<result property="startTime" column="startTime" javaType="string" />
+		<result property="endTime" column="endTime" javaType="string" />
+		<result property="proposer" column="proposer" javaType="string" />
+		<result property="createTime" column="createTime" javaType="string" />
+		<result property="creator" column="creator" javaType="string" />
+		<result property="remark" column="remark" javaType="string" />
+	</resultMap>
+	
+	<sql id="vacationColumn" >startTime, endTime,proposer,creator,TO_CHAR(createTime,'YYYY-MM-DD HH24:MI:SS') createTime,remark</sql>
+	<sql id="myWhere" >
+	<if test="proposer!=null"> and proposer = '${proposer}'  </if>
+	<if test="startTime!=null"> and startTime >= '${startTime}'  </if>
+	<if test="endTime!=null">  <![CDATA[ and endTime <= '${endTime}'  ]]> </if>
+	</sql>
+	<select id="getAllVacation" resultMap="vacation" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="vacationColumn"/>  
+				from RMM_VACATION 
+				WHERE 1=1 
+				<include refid="myWhere"/>
+				order by createTime desc
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalVacation" resultType="Integer" parameterType="map">
+	select count(*) 
+	from RMM_VACATION 
+	WHERE 1=1  
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertVacation" parameterType="vacation">
+		insert into RMM_VACATION(startTime,endTime,proposer,creator,createTime,remark) values(#{startTime,jdbcType=VARCHAR},#{endTime,jdbcType=VARCHAR},#{proposer,jdbcType=VARCHAR},#{creator,jdbcType=VARCHAR},sysdate,#{remark,jdbcType=VARCHAR})
+	</insert>
+	
+	
+</mapper>

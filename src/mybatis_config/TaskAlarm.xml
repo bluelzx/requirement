@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="taskAlarm">
+	
+	<resultMap type="taskAlarm" id="taskAlarm">
+		<result property="alarmType" column="alarmType" javaType="int" jdbcType="INTEGER" />
+		<result property="alermDays" column="alermDays" javaType="int" jdbcType="INTEGER"/>
+		<result property="urgent" column="urgent" javaType="int" jdbcType="INTEGER"/>
+		<result property="important" column="important" javaType="int" jdbcType="INTEGER"/>
+		<result property="userName" column="userName" javaType="string" />
+		<result property="taskName" column="taskName" javaType="string" />
+		<result property="signTime" column="signTime" javaType="string" />
+		<result property="requirementCode" column="requirementCode" javaType="string" />
+		<result property="requirementId" column="requirementId" javaType="string" />
+		<result property="planFinishTime" column="planFinishTime" javaType="string" />
+		<result property="planManHaur" column="planmanhaur" javaType="double" jdbcType="NUMERIC" />
+		<result property="allHaur" column="allHaur" javaType="double" jdbcType="NUMERIC" />
+		<result property="finishPercent" column="finishPercent" javaType="double" jdbcType="NUMERIC" />
+		<result property="status" column="status" javaType="int" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<select id="getAllTaskAlarm"  resultMap="taskAlarm" parameterType="map">
+	<![CDATA[
+	select * from ( 
+	    select AA.*,ROWNUM RN 
+	    from 
+	    ( 
+		select * 
+	from ( 
+	select  
+	case when  (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =1 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =0 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) <0 then 2 
+	end alarmType,
+	abs(to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) alermDays,
+	h.username userName,
+	k.taskname taskName,
+	k.taskCode taskCode,
+	g.requirementcode requirementCode,
+	g.requirementId requirementId,
+	k.planfinishtime planFinishTime,
+	k.planmanhaur planManHaur,
+	nvl(d.allHaur,0) allHaur,
+	g.urgent,
+	k.signTime signTime,
+	g.important 
+	from rmm_task k ,rmm_user h,rmm_requirement g,(select t.taskcode,sum(nvl(t.manhour,0)+nvl(t.othour,0)) allHaur from rmm_task_signin t 
+	group by t.taskcode) d 
+	where k.usercode = h.usercode 
+	and k.requirementid = g.requirementid 
+	and k.taskcode = d.taskcode(+) 
+	and k.status =2 
+	and to_date(k.planfinishtime,'yyyymmdd')-sysdate<1 
+	) order by alarmType,userName,planFinishTime,urgent,important 
+	 ) AA WHERE ROWNUM < #{endRow} 
+	  ) where RN >= #{startRow}
+]]>
+	</select>
+	
+	<select id="getAllTaskAlarmTotal"  resultType="Integer" >
+	<![CDATA[
+	
+		select count(1) 
+	from ( 
+	select  
+	case when  (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =1 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =0 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) <0 then 2 
+	end alarmType,
+	to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd') alermDays,
+	h.username userName,
+	k.taskname taskName,
+	g.requirementcode requirementCode,
+	g.requirementId requirementId,
+	k.planfinishtime planFinishTime,
+	k.planmanhaur planManHaur,
+	nvl(d.allHaur,0) allHaur,
+	g.urgent,
+	k.signTime signTime,
+	g.important 
+	from rmm_task k ,rmm_user h,rmm_requirement g,(select t.taskcode,sum(nvl(t.manhour,0)+nvl(t.othour,0)) allHaur from rmm_task_signin t 
+	group by t.taskcode) d 
+	where k.usercode = h.usercode 
+	and k.requirementid = g.requirementid 
+	and k.taskcode = d.taskcode(+) 
+	and k.status =2 
+	and to_date(k.planfinishtime,'yyyymmdd')-sysdate<1 
+	) 
+	 
+]]>
+	</select>
+	
+	<select id="getMyTaskAlarm"  resultMap="taskAlarm" parameterType="map" >
+	<![CDATA[
+			select * from ( 
+	    select AA.*,ROWNUM RN 
+	    from 
+	    (  select * 
+	from ( 
+	select 
+	case when  (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) >1 then 0 
+	 when  (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =1 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =0 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) <0 then 2 
+	end alarmType,
+	k.finishpercent finishpercent,
+	k.taskname taskName,
+	k.taskCode taskCode,
+	g.requirementcode requirementCode,
+	g.requirementId requirementId,
+	k.planfinishtime planFinishTime,
+	k.planmanhaur planManHaur,
+	nvl(d.allHaur,0) allHaur,
+	g.urgent,
+	k.signTime signTime,
+	k.status status,
+	g.important 
+	from rmm_task k ,rmm_user h,rmm_requirement g,(select t.taskcode,sum(nvl(t.manhour,0)+nvl(t.othour,0)) allHaur from rmm_task_signin t  
+	where t.usercode = #{userCode} 
+	group by t.taskcode) d 
+	where k.usercode = h.usercode 
+	and k.requirementid = g.requirementid 
+	and k.taskcode = d.taskcode(+) 
+	and k.usercode= #{userCode} 
+	and  (k.status =1 or k.status =2) 
+	) order by planFinishTime,urgent,important 
+	 ) AA WHERE ROWNUM < #{endRow} 
+	  ) where RN >= #{startRow}
+]]>
+	</select>
+	<select id="getMyTaskAlarmTotal"  resultType="Integer" parameterType="String" >
+	<![CDATA[
+			 select count(1)  
+	from ( 
+	select 
+	case when  (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) >1 then 0 
+	 when  (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =1 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) =0 then 1 
+     when (to_date(k.planfinishtime,'yyyymmdd')-to_date(to_char(sysdate,'yyyymmdd'),'yyyymmdd')) <0 then 2 
+	end alarmType,
+	k.finishpercent finishpercent,
+	k.taskname taskName,
+	g.requirementcode requirementCode,
+	g.requirementId requirementId,
+	k.planfinishtime planFinishTime,
+	k.planmanhaur planManHaur,
+	nvl(d.allHaur,0) allHaur,
+	g.urgent,
+	k.signTime signTime,
+	g.important 
+	from rmm_task k ,rmm_user h,rmm_requirement g,(select t.taskcode,sum(nvl(t.manhour,0)+nvl(t.othour,0)) allHaur from rmm_task_signin t  
+	where t.usercode = #{userCode} 
+	group by t.taskcode) d 
+	where k.usercode = h.usercode 
+	and k.requirementid = g.requirementid 
+	and k.taskcode = d.taskcode(+) 
+	and k.usercode= #{userCode} 
+	and (k.status =1 or k.status =2) 
+	) 
+]]>
+	</select>
+</mapper>

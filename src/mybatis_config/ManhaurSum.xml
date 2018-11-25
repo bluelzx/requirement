@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="manhaurListSum">
+	
+	<resultMap type="manhaurListSum" id="manhaurListSum">
+		<result property="mtype" column="mtype" javaType="string" />
+		<result property="personName" column="personName" javaType="string" />
+		<result property="doneTime" column="doneTime" javaType="double" jdbcType="NUMERIC" />
+		<result property="todoTime" column="todoTime" javaType="double" jdbcType="NUMERIC" />
+		<result property="sumTime" column="sumTime" javaType="double" jdbcType="NUMERIC" />
+		<result property="sumTask" column="sumTask" javaType="int" jdbcType="INTEGER"/>
+		<result property="doneTask" column="doneTask" javaType="int" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<select id="getManhaurListSum" resultMap="manhaurListSum" >
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select * from v_manhaur_sum t order by t.personName,t.mtype
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalManhaurListSum" resultType="Integer" >
+	select count(*) 
+	from v_manhaur_sum 
+	</select>
+	
+	
+	
+</mapper>

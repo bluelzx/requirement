@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sysuser">
+	
+	<resultMap type="sysuser" id="sysuser">
+		<result property="userCode" column="userCode" javaType="string" />
+		<result property="userName" column="userName" javaType="string" />
+		<result property="password" column="password" javaType="string" />
+		<result property="creater" column="creater" javaType="string" />
+		<result property="userType" column="USERTYPE" javaType="int" jdbcType="INTEGER"/>
+		<result property="myTeam" column="myTeam" javaType="int" jdbcType="INTEGER"/>
+		<result property="userStatus" column="USERSTATUS" javaType="int" jdbcType="INTEGER"/>
+		<result property="createTime" column="createTime" javaType="string"  />
+		<result property="rtxCode" column="RTXCODE" javaType="string"  />
+	</resultMap>
+	
+	<sql id="userColumn" >userCode, userName, password, creater,to_char(createTime,'YYYY-MM-DD HH24:MI:SS') createTime,USERTYPE,USERSTATUS,myTeam,RTXCODE</sql>
+	<sql id="myWhere" >
+	<if test="userCode!=null"> and userCode like '%${userCode}%'  </if>
+	<if test="userName!=null"> and userName like '%${userName}%'  </if>
+	<if test="creater!=null"> and creater like '%${creater}%'  </if>
+	<if test="userType!=null"> and userType=#{userType}  </if>
+	<if test="myTeam!=null"> and myTeam=#{myTeam}  </if>
+	</sql>
+	<select id="getSysUser" resultMap="sysuser" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select <include refid="userColumn"/>  
+				from rmm_user 
+				WHERE USERSTATUS=1 
+				<include refid="myWhere"/>
+				order by userCode
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getUnCheckUser" resultMap="sysuser" parameterType="map">
+	
+	select *
+  from rmm_user t1
+ where t1.USERSTATUS = '1'
+   and not exists
+ (select 'a'
+          from rmm_task_signin t2
+         where t2.usercode = t1.usercode
+           and TO_CHAR(T2.CREATETIME, 'yyyyMMdd') = #{data_date} )
+	</select>
+	
+	<select id="getTotalSysUser" resultType="Integer" parameterType="map">
+	select count(*) 
+	from rmm_user 
+	WHERE USERSTATUS=1  
+	<include refid="myWhere"/>
+	</select>
+	
+	<insert id="insertSysUser" parameterType="sysuser">
+		insert into rmm_user(userCode,userName,password,createTime,USERTYPE,myTeam,USERSTATUS,RTXCODE) values(#{userCode},#{userName},#{password},sysdate,#{userType},#{myTeam},1,#{userCode})
+	</insert>
+	
+	<select id="getAllUserForAddMenu" resultMap="sysuser" >
+		select userCode, userName from rmm_user where USERSTATUS=1  order by userCode
+	</select>
+	
+	<select id="getUCAddMenu" resultMap="sysuser" parameterType="string">
+		SELECT T3.* 
+		FROM RMM_USER T3
+		WHERE  T3.USERSTATUS !=0
+		AND NOT EXISTS (
+		SELECT 'X' FROM RMM_USER_MENU T2 WHERE T2.USERCODE=T3.USERCODE AND  T2.MENUCODE = #{menuCode}
+		)
+	</select>
+	
+	<select id="getUAddedMenu" resultMap="sysuser" parameterType="string">
+		select T1.* 
+		FROM RMM_USER T1,RMM_USER_MENU T2,RMM_MENU T3
+		WHERE T1.USERCODE = T2.USERCODE
+		AND T2.MENUCODE = T3.MENUCODE
+		AND T3.MENUCODE = #{menuCode}
+		AND T1.USERSTATUS !=0
+	</select>
+	
+	<update id="disableByUserCode" parameterType="string">
+		update  rmm_user set userStatus=0
+		where userCode=#{userCode}
+	</update>
+	
+	<select id="getUserByUserCode" resultMap="sysuser" parameterType="string">
+		select *
+		from rmm_user
+		where userCode=#{userCode}
+	</select>
+	
+	<update id="updateSysUser" parameterType="sysuser">
+		update  rmm_user set userName=#{userName},createTime=sysdate,userType=#{userType},myTeam=#{myTeam}
+		where userCode = #{userCode}
+	</update>
+	
+	<select id="getReUsers" resultMap="sysuser" parameterType="string">
+		select t3.userCode, t3.userName, t3.password, t3.creater,to_char(t3.createTime,'YYYY-MM-DD HH24:MI:SS') createTime,t3.USERTYPE,t3.USERSTATUS 
+		from rmm_task t1,rmm_user t3
+		where  t1.usercode = t3.usercode
+		and t1.requirementid = #{requirementId}
+	</select>
+	
+	<update id="updateUserPass" parameterType="sysuser">
+		update  rmm_user set password=#{password}
+		where userCode = #{userCode}
+	</update>
+	
+	<select id="getSelectUsers" resultMap="sysuser" >
+	select userCode,userName from rmm_user where USERSTATUS !=0
+	order by userCode asc
+	</select>
+	
+	<select id="getSelectManagerUsers" resultMap="sysuser" >
+	select userCode,userName from rmm_user where USERSTATUS !=0
+	and usertype=1
+	order by userCode asc
+	</select>
+	
+	<select id="getHoliday" resultType="string" parameterType="string">
+	select holiday_date 
+	from rmm_holiday 
+	WHERE holiday_date = #{holiday_date}  
+	</select>
+	
+</mapper>

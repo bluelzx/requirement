@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="manhaurList">
+	
+	<resultMap type="manhaurList" id="manhaurList">
+		<result property="mtype" column="mtype" javaType="string" />
+		<result property="personName" column="personName" javaType="string" />
+		<result property="doneTime" column="doneTime" javaType="double" jdbcType="NUMERIC" />
+		<result property="todoTime" column="todoTime" javaType="double" jdbcType="NUMERIC" />
+		<result property="sumTime" column="sumTime" javaType="double" jdbcType="NUMERIC" />
+		<result property="requirementCode" column="requirementCode" javaType="string"/>
+		<result property="requirementName" column="requirementName" javaType="string"/>
+		<result property="taskName" column="taskName" javaType="string"/>
+		<result property="endTime" column="endTime" javaType="string"/>
+	</resultMap>
+	
+	<select id="getManhaurList" resultMap="manhaurList" parameterType="map">
+	
+	select * from (
+	       select AA.*,ROWNUM RN
+	       from (
+	       		select * from v_manhaur_list t order by t.personName,t.requirementCode,t.mtype
+	       ) AA 
+	       <![CDATA[
+	        WHERE ROWNUM < #{endRow}
+       ) where RN >= #{startRow}
+       ]]>
+	</select>
+	
+	<select id="getTotalManhaurList" resultType="Integer" >
+	select count(*) 
+	from v_manhaur_list 
+	</select>
+	
+	
+	
+</mapper>

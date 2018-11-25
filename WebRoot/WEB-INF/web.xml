@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+	<!-- 加入Spring相关配置 -->
+	<!--<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring_config/applicationContext.xml</param-value>
+	</context-param>
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	-->
+	
+	<!--  
+	<listener>
+		<listener-class>com.zq.foo.util.ApplicationDataBaseInit</listener-class>
+	</listener>
+	-->
+	<filter>
+		<filter-name>encode</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>encode</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<filter>
+		<filter-name>LogCheckFilter</filter-name>
+		<filter-class>
+			com.lanzx.rmmsys.filter.LogCheckFilter
+		</filter-class>
+		<init-param>
+			<param-name>excludePrefix</param-name>
+			<param-value>
+				/images|/toLogin.do|/doLogin.do|/WEB-INF/jsp/login.jsp
+			</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>LogCheckFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- Spring MVC 相关配置 -->
+	<servlet>
+		<servlet-name>Dispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring_config/applicationContext-mvc.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Dispatcher</servlet-name>
+		<url-pattern>*.do</url-pattern>
+	</servlet-mapping>
+	
+	<welcome-file-list>
+	    <welcome-file>toLogin.do</welcome-file>
+	</welcome-file-list>
+	
+	<session-config>
+		<session-timeout>480</session-timeout>
+	</session-config>
+</web-app>
